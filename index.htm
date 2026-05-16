@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BI Logístico - Orçamento e Custos</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js Base & DataLabels -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+
+    <!-- SheetJS (Leitura EXCEL) e PapaParse (Leitura CSV) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Configuração Tailwind -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { bg: '#0B1120', card: '#111827', border: '#1F2937', hover: '#1e293b', menu: '#0f172a' },
+                        brand: { cyan: '#06b6d4', blue: '#3b82f6', purple: '#8b5cf6' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0B1120; color: #e2e8f0; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .chart-container { position: relative; width: 100%; height: 320px; }
+        th.sortable { cursor: pointer; user-select: none; transition: all 0.2s ease; }
+        th.sortable:hover { background-color: rgba(255, 255, 255, 0.05); color: #06b6d4; }
+        .tab-btn.active { border-bottom: 2px solid #06b6d4; color: #06b6d4; background-color: rgba(6, 182, 212, 0.1); }
+        .glow-card { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3); transition: transform 0.2s, box-shadow 0.2s; }
+        .glow-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 0 15px rgba(6, 182, 212, 0.15); }
+        .badge { display: inline-flex; align-items: center; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .expand-icon { transition: transform 0.3s ease; }
+        .expand-icon.expanded { transform: rotate(90deg); }
+        #login-overlay { backdrop-filter: blur(8px); }
+        .cb-custom { accent-color: #06b6d4; cursor: pointer; width: 1rem; height: 1rem; }
+    </style>
+
+    <!-- FIRESTORE DB MODULE (COM AS SUAS CHAVES) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyAN6WhmqqH-MT-SIQXD3WO-Okd2XfT5mbk",
+          authDomain: "bi-logistico.firebaseapp.com",
+          projectId: "bi-logistico",
+          storageBucket: "bi-logistico.firebasestorage.app",
+          messagingSenderId: "259047090339",
+          appId: "1:259047090339:web:356e770ad9c8a90d0a3716",
+          measurementId: "G-5HYP1LPXMR"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Exporta para uso global no painel
+        window.db = db;
+        window.auth = auth;
+        window.collection = collection;
+        window.getDocs = getDocs;
+        window.doc = doc;
+        window.writeBatch = writeBatch;
+        window.appId = 'bi-logistico-db'; 
+
+        const initAuth = async () => { await signInAnonymously(auth); };
+        
+        initAuth().then(() => {
+            document.dispatchEvent(new Event('FirebaseReady'));
+        });
+    </script>
+</head>
+<body class="min-h-screen flex flex-col antialiased relative">
+
+    <!-- TELA DE LOGIN -->
+    <div id="login-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-dark-bg/90">
+        <div class="bg-dark-card border border-dark-border p-8 rounded-2xl shadow-2xl w-full max-w-md glow-card">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-brand-cyan to-brand-blue flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.6)] mb-4">
+                    <i class="fa-solid fa-cloud-arrow-up text-white text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white">Acesso Cloud Restrito</h2>
+                <p class="text-gray-400 text-sm mt-1">DRE Logístico Integrado</p>
+            </div>
+            
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1"><i class="fa-solid fa-user mr-1 text-brand-cyan"></i> Usuário</label>
+                    <input type="text" id="login-user" class="w-full bg-[#0B1120] border border-dark-border text-white rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-transparent block p-2.5 outline-none transition-all" placeholder="Digite o usuário">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1"><i class="fa-solid fa-lock mr-1 text-brand-cyan"></i> Senha</label>
+                    <input type="password" id="login-pass" class="w-full bg-[#0B1120] border border-dark-border text-white rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-transparent block p-2.5 outline-none transition-all" placeholder="••••••••">
+                </div>
+                <div id="login-error" class="text-red-400 text-sm hidden font-medium text-center py-2 bg-red-500/10 rounded border border-red-500/20">
+                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Credenciais inválidas.
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-brand-cyan to-brand-blue hover:from-cyan-400 hover:to-blue-400 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-[1.02]">
+                    Conectar ao Banco de Dados <i class="fa-solid fa-network-wired ml-2"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Header Principal -->
+    <header class="bg-dark-card border-b border-dark-border sticky top-0 z-20 shadow-lg">
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col xl:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-cyan to-brand-blue flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                    <i class="fa-solid fa-rocket text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-tight">Dashboard Orçamentário <span class="text-brand-cyan">LOGÍSTICA</span></h1>
+                    <p class="text-[11px] text-brand-cyan font-medium flex items-center" id="last-update"><i class="fa-solid fa-satellite-dish fa-fade mr-1"></i> Inicializando Sistema...</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Filtros -->
+                <div class="flex items-center bg-[#0B1120] p-1.5 rounded-lg border border-dark-border relative">
+                    <div id="category-filter-badge" class="hidden absolute -top-3 left-2 bg-brand-purple text-white text-[10px] px-2 py-0.5 rounded-full shadow-md z-10 animate-pulse border border-purple-400/50">
+                        <i class="fa-solid fa-chart-pie mr-1"></i> Filtro de Subgrupo Ativo
+                    </div>
+                    
+                    <div class="relative custom-dropdown" id="dropdown-container-month">
+                        <button onclick="toggleDropdown('menu-month')" class="flex items-center justify-between w-40 bg-transparent text-sm text-gray-200 font-medium px-3 py-1 outline-none cursor-pointer hover:text-white border border-transparent hover:border-dark-border rounded">
+                            <span id="label-month" class="truncate">Meses (Todos)</span>
+                            <i class="fa-solid fa-chevron-down text-xs text-brand-cyan ml-2"></i>
+                        </button>
+                        <div id="menu-month" class="dropdown-menu hidden absolute top-full left-0 mt-1 w-48 bg-dark-menu border border-dark-border rounded-lg shadow-xl py-2 z-50">
+                            <div class="px-3 pb-2 mb-2 border-b border-dark-border">
+                                <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:text-white">
+                                    <input type="checkbox" id="check-all-month" class="cb-custom" checked onchange="toggleAllFilters('month', this.checked)">
+                                    <span class="font-semibold">Selecionar Todos</span>
+                                </label>
+                            </div>
+                            <div id="list-month" class="max-h-48 overflow-y-auto custom-scroll px-2 space-y-1"></div>
+                        </div>
+                    </div>
+
+                    <div class="w-px h-5 bg-dark-border mx-1"></div>
+                    
+                    <div class="relative custom-dropdown" id="dropdown-container-branch">
+                        <button onclick="toggleDropdown('menu-branch')" class="flex items-center justify-between w-40 bg-transparent text-sm text-gray-200 font-medium px-3 py-1 outline-none cursor-pointer hover:text-white border border-transparent hover:border-dark-border rounded">
+                            <span id="label-branch" class="truncate">Filial (Todas)</span>
+                            <i class="fa-solid fa-chevron-down text-xs text-brand-cyan ml-2"></i>
+                        </button>
+                        <div id="menu-branch" class="dropdown-menu hidden absolute top-full left-0 mt-1 w-56 bg-dark-menu border border-dark-border rounded-lg shadow-xl py-2 z-50">
+                            <div class="px-3 pb-2 mb-2 border-b border-dark-border">
+                                <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:text-white">
+                                    <input type="checkbox" id="check-all-branch" class="cb-custom" checked onchange="toggleAllFilters('branch', this.checked)">
+                                    <span class="font-semibold">Selecionar Todas</span>
+                                </label>
+                            </div>
+                            <div id="list-branch" class="max-h-60 overflow-y-auto custom-scroll px-2 space-y-1"></div>
+                        </div>
+                    </div>
+
+                    <button id="btn-reset" onclick="resetAllFilters()" class="bg-dark-border hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 text-gray-300 px-2.5 py-1 rounded text-sm transition-all border border-transparent ml-1" title="Limpar Todos os Filtros">
+                        <i class="fa-solid fa-filter-circle-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Enviar Nova Base -->
+                <div class="flex items-center gap-2">
+                    <button onclick="document.getElementById('excel-upload').click()" class="bg-[#1e293b] hover:bg-brand-purple text-white border border-dark-border hover:border-brand-purple px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-md flex items-center gap-2 group">
+                        <i class="fa-solid fa-cloud-arrow-up text-brand-purple group-hover:text-white transition-colors"></i> Enviar Nova Base
+                    </button>
+                    <input type="file" id="excel-upload" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileUpload(event)">
+                    
+                    <button onclick="location.reload()" class="text-gray-500 hover:text-red-400 transition-colors ml-2" title="Sair do Sistema">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+        
+        <!-- Loader Inicial Cloud -->
+        <div id="loading-state" class="bg-dark-card border border-dark-border text-gray-300 p-8 rounded-xl flex flex-col items-center justify-center shadow-lg">
+            <i class="fa-solid fa-satellite-dish fa-fade text-brand-cyan text-4xl mb-4"></i>
+            <h3 class="text-lg font-bold text-white">Sincronizando com o Banco de Dados...</h3>
+            <p class="text-sm text-gray-500 mt-2" id="sync-status">Aguardando login de segurança.</p>
+        </div>
+
+        <!-- Alerta de Ausência de Dados -->
+        <div id="empty-state-alert" class="hidden bg-brand-blue/10 border border-brand-blue/30 text-brand-blue p-4 rounded-xl items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-circle-info text-2xl"></i>
+                <div>
+                    <h3 class="font-bold text-white">Banco de Dados Vazio</h3>
+                    <p class="text-sm">O sistema foi conectado com sucesso, mas ainda não há dados na nuvem. Clique em "Enviar Nova Base" no topo da tela para carregar o seu Excel. Feito isso, toda sua equipe já conseguirá visualizar!</p>
+                </div>
+            </div>
+            <i class="fa-solid fa-arrow-up text-xl animate-bounce"></i>
+        </div>
+
+        <!-- Conteúdo do Dashboard -->
+        <div id="dashboard-content" class="hidden space-y-6">
+            <!-- KPIs -->
+            <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-gray-500"></div>
+                    <p class="text-sm font-medium text-gray-400 mb-1">Orçado Acumulado</p>
+                    <h2 class="text-3xl font-bold text-white" id="kpi-orcado">R$ 0,00</h2>
+                </div>
+                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-brand-cyan"></div>
+                    <p class="text-sm font-medium text-gray-400 mb-1">Realizado Acumulado</p>
+                    <h2 class="text-3xl font-bold text-white" id="kpi-realizado">R$ 0,00</h2>
+                </div>
+                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full" id="kpi-saldo-border"></div>
+                    <p class="text-sm font-medium text-gray-400 mb-1">Saldo Líquido (Real vs Orçado)</p>
+                    <h2 class="text-3xl font-bold" id="kpi-saldo">R$ 0,00</h2>
+                    <div class="mt-2 inline-flex" id="kpi-saldo-badge"></div>
+                </div>
+                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden flex flex-col justify-center">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-brand-purple"></div>
+                    <p class="text-sm font-medium text-gray-400 mb-1">% de Execução Global</p>
+                    <div class="flex items-end gap-3">
+                        <h2 class="text-3xl font-bold text-white" id="kpi-execucao">0%</h2>
+                        <div class="w-full bg-gray-800 rounded-full h-2.5 mb-2">
+                            <div class="bg-brand-purple h-2.5 rounded-full transition-all duration-1000" id="kpi-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts -->
+            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card lg:col-span-2 flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-map-location-dot text-brand-cyan"></i> Desempenho Comparativo entre Filiais
+                        </h3>
+                    </div>
+                    <div class="chart-container flex-grow" style="height: 350px;"><canvas id="chartFilial"></canvas></div>
+                </div>
+
+                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col relative group">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-brand-cyan"></i> Distribuição por Subgrupo
+                        </h3>
+                    </div>
+                    <div class="text-xs text-gray-500 mb-2 italic bg-dark-border/30 p-2 rounded border border-dark-border leading-relaxed">
+                        <i class="fa-solid fa-hand-pointer mr-1 text-brand-cyan"></i> Clique no <strong>nome na legenda</strong> abaixo para filtrar.<br>
+                        <i class="fa-solid fa-keyboard mr-1 mt-1 text-brand-purple"></i> Segure <kbd class="bg-gray-800 px-1 rounded border border-gray-600 text-[10px]">Ctrl</kbd> e clique em vários para seleção múltipla.
+                    </div>
+                    <div class="chart-container flex-grow flex items-center justify-center mt-2"><canvas id="chartComposicao"></canvas></div>
+                </div>
+            </section>
+
+            <!-- Trend Chart -->
+            <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-brand-cyan"></i> Evolução Mensal e Variação Percentual
+                    </h3>
+                </div>
+                <div class="chart-container" style="height: 300px;"><canvas id="chartEvolucao"></canvas></div>
+            </section>
+
+            <!-- Tables (Tabs) -->
+            <section class="bg-dark-card border border-dark-border rounded-xl glow-card flex flex-col overflow-hidden">
+                <div class="flex border-b border-dark-border bg-[#0B1120]">
+                    <button onclick="switchTab('tab-status')" id="btn-tab-status" class="tab-btn active flex-1 py-4 text-sm font-semibold transition-colors flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-temperature-half"></i> Análise de Variação e Status
+                    </button>
+                    <button onclick="switchTab('tab-matriz')" id="btn-tab-matriz" class="tab-btn text-gray-400 hover:text-white flex-1 py-4 text-sm font-semibold transition-colors flex justify-center items-center gap-2 border-l border-dark-border">
+                        <i class="fa-solid fa-calendar-days"></i> Matriz Mensal Detalhada (Drill-down)
+                    </button>
+                </div>
+
+                <div id="tab-status" class="tab-content block overflow-x-auto">
+                    <div class="text-xs text-brand-cyan bg-[#0B1120] py-2 px-4 border-b border-dark-border italic flex justify-between">
+                        <span><i class="fa-solid fa-circle-info mr-1"></i> Clique no cabeçalho para ordenar.</span>
+                    </div>
+                    <table class="w-full text-sm text-left text-gray-300">
+                        <thead class="text-xs uppercase bg-[#0B1120] text-gray-400 sticky top-0 border-b border-dark-border z-10">
+                            <tr>
+                                <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="conta" data-target="status">Conta <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="descricao" data-target="status">Descrição <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="filial" data-target="status">Filial <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                <th class="px-4 py-3 text-right sortable group bg-[#0B1120]" data-sort="orcamento" data-target="status">Orçado <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                <th class="px-4 py-3 text-right sortable group bg-[#0B1120]" data-sort="realizado" data-target="status">Realizado <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                <th class="px-4 py-3 text-right sortable group bg-[#0B1120]" data-sort="saldo" data-target="status">Saldo <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="variacaoNum" data-target="status">Variação / Status <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-status" class="divide-y divide-dark-border"></tbody>
+                    </table>
+                </div>
+
+                <div id="tab-matriz" class="tab-content hidden overflow-x-auto">
+                    <div class="text-xs text-brand-cyan bg-[#0B1120] py-2 px-4 border-b border-dark-border italic">
+                        <i class="fa-solid fa-hand-pointer mr-1"></i> Clique sobre a linha da Descrição para expandir e ver os custos detalhados por Filial.
+                    </div>
+                    <table class="w-full text-sm text-left text-gray-300">
+                        <thead class="text-xs uppercase bg-[#0B1120] text-gray-400 sticky top-0 border-b border-dark-border z-10" id="thead-matriz"></thead>
+                        <tbody id="tbody-matriz" class="divide-y divide-dark-border/50"></tbody>
+                    </table>
+                </div>
+                
+                <div class="bg-[#0B1120] p-3 border-t border-dark-border text-xs text-gray-500 flex justify-between items-center">
+                    <span id="active-filters-info">Filtros: Nenhum</span>
+                    <span id="table-footer-info">0 registros</span>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        Chart.register(ChartDataLabels);
+
+        // ==========================================
+        // 1. SISTEMA DE LOGIN E INICIALIZAÇÃO DB
+        // ==========================================
+        let isUserAuthenticated = false;
+
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const user = document.getElementById('login-user').value;
+            const pass = document.getElementById('login-pass').value;
+            
+            // USUÁRIO E SENHA PADRÃO
+            if (user.toLowerCase() === 'logística' && pass === 'log123') {
+                document.getElementById('login-overlay').style.opacity = '0';
+                setTimeout(() => document.getElementById('login-overlay').style.display = 'none', 300);
+                isUserAuthenticated = true;
+                if (window.db) fetchDataFromCloud();
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+                document.getElementById('login-pass').value = '';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.custom-dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.add('hidden'));
+            }
+        });
+
+        function toggleDropdown(menuId) {
+            const menu = document.getElementById(menuId);
+            const isHidden = menu.classList.contains('hidden');
+            document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.add('hidden'));
+            if (isHidden) menu.classList.remove('hidden');
+        }
+
+        // ==========================================
+        // 2. LÓGICA CLOUD E SINCRONIZAÇÃO
+        // ==========================================
+        const mesesNomesGlobais = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+        const extendedPalette = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#f43f5e', '#84cc16', '#14b8a6', '#6366f1', '#d946ef', '#f97316', '#eab308', '#22c55e', '#0ea5e9', '#a855f7', '#fb7185', '#bef264', '#2dd4bf', '#818cf8', '#e879f9', '#fb923c'];
+
+        let state = {
+            data: [], filteredData: [],
+            mesesDisponiveis: [], filiaisDisponiveis: [],
+            filters: { month: [], branch: [], category: [] },
+            sortStatus: { column: 'none', direction: 'none' }, 
+            sortMatriz: { column: 'none', direction: 'none' },
+            charts: { filial: null, composicao: null, evolucao: null },
+            expandedRows: {}
+        };
+
+        const formatBR = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        const formatPct = (val) => new Intl.NumberFormat('pt-BR', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 }).format((val || 0)/100);
+        const formatKMBT = (num) => {
+            if (!num || num === 0) return '';
+            if (Math.abs(num) >= 1000000) return (num / 1000000).toFixed(1).replace('.', ',') + 'M';
+            if (Math.abs(num) >= 1000) return (num / 1000).toFixed(0) + 'k';
+            return num.toFixed(0);
+        };
+
+        document.addEventListener('FirebaseReady', () => {
+            document.getElementById('sync-status').textContent = 'Conectado. Aguardando autenticação...';
+            if (isUserAuthenticated) fetchDataFromCloud();
+        });
+
+        // LEITURA DO FIRESTORE
+        async function fetchDataFromCloud() {
+            document.getElementById('sync-status').textContent = 'Lendo banco de dados da nuvem...';
+            
+            try {
+                // Coleção onde os dados estão salvos (agora usando auth anonima)
+                const userUid = window.auth.currentUser?.uid;
+                if (!userUid) throw new Error("Usuário não autenticado no banco");
+
+                // Buscando da coleção global (para todos verem os mesmos dados)
+                const lancamentosRef = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'lancamentos');
+                const querySnapshot = await window.getDocs(lancamentosRef);
+                
+                let rawDataFromCloud = [];
+                querySnapshot.forEach((doc) => { rawDataFromCloud.push(doc.data()); });
+
+                if (rawDataFromCloud.length > 0) {
+                    processRawData(rawDataFromCloud, false);
+                    document.getElementById('last-update').innerHTML = `<i class="fa-solid fa-cloud-check text-emerald-400 mr-1"></i> Sincronizado (Cloud)`;
+                } else {
+                    // O BANCO ESTÁ VAZIO
+                    document.getElementById('loading-state').classList.add('hidden');
+                    document.getElementById('empty-state-alert').classList.remove('hidden');
+                    document.getElementById('empty-state-alert').classList.add('flex');
+                }
+            } catch (error) {
+                console.error("Erro na leitura Cloud:", error);
+                document.getElementById('sync-status').textContent = 'Erro ao ler nuvem. Verifique o Firebase.';
+                setTimeout(() => {
+                    document.getElementById('loading-state').classList.add('hidden');
+                    document.getElementById('empty-state-alert').classList.remove('hidden');
+                    document.getElementById('empty-state-alert').classList.add('flex');
+                }, 2000);
+            }
+        }
+
+        // SALVAR NA NUVEM (FIRESTORE) - Disparado quando você faz upload do Excel
+        async function uploadDataToCloud(dataArray) {
+            document.getElementById('empty-state-alert').style.display = 'none';
+            document.getElementById('empty-state-alert').classList.remove('flex');
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('dashboard-content').classList.add('hidden');
+            document.getElementById('sync-status').textContent = `Enviando ${dataArray.length} registros para a nuvem... (Isso pode levar alguns segundos)`;
+
+            try {
+                const userUid = window.auth.currentUser?.uid;
+                if (!userUid) return;
+
+                const batches = [];
+                let currentBatch = window.writeBatch(window.db);
+                let opCount = 0;
+
+                for (let i = 0; i < dataArray.length; i++) {
+                    const item = dataArray[i];
+                    // Gerar um ID seguro pra linha (Mês + Filial + Conta)
+                    const safeFilial = item.filial.replace(/[^a-zA-Z0-9]/g, '');
+                    const safeConta = item.conta.replace(/[^a-zA-Z0-9]/g, '');
+                    const docId = `L-${item.mesStr}-${safeFilial}-${safeConta}`;
+                    
+                    const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'lancamentos', docId);
+                    
+                    currentBatch.set(docRef, item);
+                    opCount++;
+
+                    if (opCount === 450) { // O limite do firebase é 500 por lote
+                        batches.push(currentBatch);
+                        currentBatch = window.writeBatch(window.db);
+                        opCount = 0;
+                    }
+                }
+                if (opCount > 0) batches.push(currentBatch);
+
+                // Envia todos os lotes pra nuvem
+                for (let batch of batches) { await batch.commit(); }
+
+                document.getElementById('sync-status').textContent = 'Nuvem atualizada com sucesso!';
+                setTimeout(() => {
+                    document.getElementById('loading-state').classList.add('hidden');
+                    document.getElementById('dashboard-content').classList.remove('hidden');
+                    document.getElementById('last-update').innerHTML = `<i class="fa-solid fa-cloud-check text-emerald-400 mr-1"></i> Banco Atualizado`;
+                }, 1000);
+
+            } catch (e) {
+                console.error("Erro Upload Cloud:", e);
+                alert("Erro ao salvar na nuvem. Verifique suas regras do Firebase.");
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('dashboard-content').classList.remove('hidden');
+            }
+        }
+
+        // ==========================================
+        // 3. PROCESSAMENTO DE EXCEL / CSV NO BROWSER
+        // ==========================================
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const btn = event.target.previousElementSibling;
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Analisando Excel...`;
+
+            if (file.name.endsWith('.csv')) {
+                Papa.parse(file, {
+                    header: true, skipEmptyLines: true,
+                    complete: function(results) {
+                        processRawData(results.data, true); // true = Sobe pra Nuvem
+                        btn.innerHTML = originalContent; event.target.value = '';
+                    }
+                });
+            } else {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+                        const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                        if(json.length > 0) processRawData(json, true); // true = Sobe pra Nuvem
+                    } catch (err) {
+                        console.error(err); alert("Erro ao ler Excel.");
+                    } finally {
+                        btn.innerHTML = originalContent; event.target.value = ''; 
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function parseFinanceValue(val) {
+            if (val === null || val === undefined || val === '') return 0;
+            if (typeof val === 'number') return val; 
+            let s = String(val).trim();
+            if (s === '-' || s.toLowerCase() === 'nan') return 0;
+            if (s.includes(',') && !s.includes('.')) s = s.replace(',', '.');
+            else if (s.includes(',') && s.includes('.')) s = s.replace(/\./g, '').replace(',', '.');
+            let num = parseFloat(s);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function processRawData(rawData, shouldUploadToCloud = false) {
+            let processed = [];
+            let mesesSet = new Set();
+            let filiaisSet = new Set();
+
+            rawData.forEach((row) => {
+                const cleanRow = {};
+                for (let key in row) cleanRow[key.trim().toUpperCase()] = row[key];
+
+                let mesStrFormatado = cleanRow['MESSTR'] || 'N/A';
+                let mesNumFormatado = cleanRow['MESNUM'] || 0;
+                
+                if (mesStrFormatado === 'N/A') {
+                    const dataRef = cleanRow['MÊS_REF'] || cleanRow['MES_REF'] || cleanRow['MÊS REF'];
+                    if (dataRef) {
+                        if (dataRef instanceof Date) { mesNumFormatado = dataRef.getMonth() + 1; } 
+                        else {
+                            const strData = String(dataRef).trim();
+                            if (strData.includes('-')) {
+                                const p = strData.split('-'); if (p.length >= 2) mesNumFormatado = parseInt(p[1], 10);
+                            } else if (strData.includes('/')) {
+                                const p = strData.split('/'); if (p.length >= 2) mesNumFormatado = parseInt(p[1], 10);
+                            }
+                        }
+                        if(mesNumFormatado >= 1 && mesNumFormatado <= 12) mesStrFormatado = mesesNomesGlobais[mesNumFormatado - 1];
+                    }
+                }
+
+                if (mesStrFormatado === 'N/A') return;
+
+                let orcamentoVal = cleanRow['ORCAMENTO'] !== undefined ? cleanRow['ORCAMENTO'] : parseFinanceValue(cleanRow['ORCAMENTO PREVISTO'] || cleanRow['ORÇAMENTO PREVISTO']);
+                let realizadoVal = cleanRow['REALIZADO'] !== undefined && typeof cleanRow['REALIZADO'] === 'number' ? cleanRow['REALIZADO'] : parseFinanceValue(cleanRow['REALIZADO']);
+                const filialVal = cleanRow['FILIAL'] ? String(cleanRow['FILIAL']).trim() : 'S/ Filial';
+                
+                processed.push({
+                    conta: String(cleanRow['CONTA SICF'] || cleanRow['CONTA'] || '-').trim(),
+                    descricao: String(cleanRow['DESCRIÇÃO'] || cleanRow['DESCRICAO'] || '-').trim(),
+                    filial: filialVal,
+                    mesNum: mesNumFormatado,
+                    mesStr: mesStrFormatado,
+                    orcamento: orcamentoVal,
+                    realizado: realizadoVal
+                });
+            });
+
+            if (processed.length === 0) return;
+
+            // Se for upload novo, junta os dados antigos com os novos
+            if (shouldUploadToCloud && state.data.length > 0) {
+                state.data = [...state.data, ...processed];
+                uploadDataToCloud(processed); 
+            } else {
+                state.data = processed;
+                if(shouldUploadToCloud) uploadDataToCloud(processed);
+            }
+
+            state.data.forEach(d => { mesesSet.add(d.mesStr); filiaisSet.add(d.filial); });
+            state.mesesDisponiveis = Array.from(mesesSet).sort((a, b) => mesesNomesGlobais.indexOf(a) - mesesNomesGlobais.indexOf(b));
+            state.filiaisDisponiveis = Array.from(filiaisSet).sort();
+            
+            resetAllFilters(false); buildFilterUI();
+
+            document.getElementById('loading-state').classList.add('hidden');
+            if(document.getElementById('empty-state-alert')) document.getElementById('empty-state-alert').style.display = 'none';
+            document.getElementById('dashboard-content').classList.remove('hidden');
+
+            updateApp();
+        }
+
+        // ==========================================
+        // 4. UI DE FILTROS E ATUALIZAÇÕES
+        // ==========================================
+        function buildFilterUI() {
+            const listM = document.getElementById('list-month'); listM.innerHTML = '';
+            state.mesesDisponiveis.forEach(m => {
+                const isChecked = state.filters.month.length === 0 || state.filters.month.includes(m);
+                listM.insertAdjacentHTML('beforeend', `<label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-white px-1 py-1 rounded hover:bg-dark-border/50"><input type="checkbox" class="cb-custom cb-month" value="${m}" ${isChecked ? 'checked' : ''} onchange="handleItemCheck('month')"><span>${m}</span></label>`);
+            });
+
+            const listF = document.getElementById('list-branch'); listF.innerHTML = '';
+            state.filiaisDisponiveis.forEach(f => {
+                const isChecked = state.filters.branch.length === 0 || state.filters.branch.includes(f);
+                listF.insertAdjacentHTML('beforeend', `<label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-white px-1 py-1 rounded hover:bg-dark-border/50"><input type="checkbox" class="cb-custom cb-branch" value="${f}" ${isChecked ? 'checked' : ''} onchange="handleItemCheck('branch')"><span class="truncate">${f}</span></label>`);
+            });
+            updateFilterLabels();
+        }
+
+        function toggleAllFilters(type, isChecked) {
+            document.querySelectorAll(`.cb-${type}`).forEach(cb => cb.checked = isChecked);
+            handleItemCheck(type);
+        }
+
+        function handleItemCheck(type) {
+            const checkboxes = document.querySelectorAll(`.cb-${type}`);
+            const checkAll = document.getElementById(`check-all-${type}`);
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            checkAll.checked = allChecked;
+            const selected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+            state.filters[type] = (allChecked || selected.length === checkboxes.length) ? [] : selected;
+            updateFilterLabels(); updateApp();
+        }
+
+        function updateFilterLabels() {
+            const lMonth = document.getElementById('label-month');
+            if(state.filters.month.length === 0) lMonth.textContent = "Meses (Todos)";
+            else if(state.filters.month.length === 1) lMonth.textContent = state.filters.month[0];
+            else lMonth.textContent = `Meses (${state.filters.month.length})`;
+
+            const lBranch = document.getElementById('label-branch');
+            if(state.filters.branch.length === 0) lBranch.textContent = "Filial (Todas)";
+            else if(state.filters.branch.length === 1) lBranch.textContent = state.filters.branch[0];
+            else lBranch.textContent = `Filiais (${state.filters.branch.length})`;
+
+            if(Array.from(document.querySelectorAll('.cb-month')).every(c=>!c.checked)) lMonth.textContent = "Nenhum";
+            if(Array.from(document.querySelectorAll('.cb-branch')).every(c=>!c.checked)) lBranch.textContent = "Nenhuma";
+        }
+
+        function resetAllFilters(triggerUpdate = true) {
+            state.filters = { month: [], branch: [], category: [] };
+            document.getElementById('category-filter-badge').classList.add('hidden');
+            if (state.data.length > 0) {
+                if(document.getElementById('check-all-month')) document.getElementById('check-all-month').checked = true;
+                if(document.getElementById('check-all-branch')) document.getElementById('check-all-branch').checked = true;
+                document.querySelectorAll('.cb-month, .cb-branch').forEach(cb => cb.checked = true);
+                updateFilterLabels();
+                if(triggerUpdate) updateApp();
+            }
+        }
+
+        function updateApp() {
+            if(state.data.length === 0) return;
+            const noMonths = document.querySelectorAll('.cb-month').length > 0 && Array.from(document.querySelectorAll('.cb-month')).every(c=>!c.checked);
+            const noBranches = document.querySelectorAll('.cb-branch').length > 0 && Array.from(document.querySelectorAll('.cb-branch')).every(c=>!c.checked);
+
+            if (noMonths || noBranches) state.filteredData = [];
+            else {
+                state.filteredData = state.data.filter(d => {
+                    const matchM = state.filters.month.length === 0 || state.filters.month.includes(d.mesStr);
+                    const matchB = state.filters.branch.length === 0 || state.filters.branch.includes(d.filial);
+                    const matchC = state.filters.category.length === 0 || state.filters.category.includes(d.descricao);
+                    return matchM && matchB && matchC;
+                });
+            }
+            updateKPIs(); renderTableStatus(); renderTableMatriz(); updateCharts();
+            
+            let fInfo = [];
+            if(state.filters.month.length > 0) fInfo.push(`${state.filters.month.length} Mês(es)`);
+            if(state.filters.branch.length > 0) fInfo.push(`${state.filters.branch.length} Filial(is)`);
+            if(state.filters.category.length > 0) fInfo.push(`${state.filters.category.length} Subgrupo(s)`);
+            document.getElementById('active-filters-info').innerHTML = fInfo.length > 0 ? `<i class="fa-solid fa-filter mr-1 text-brand-cyan"></i> Filtros ativos: ${fInfo.join(' | ')}` : 'Filtros: Todos aplicados';
+        }
+
+        function updateKPIs() {
+            const sumOrçado = state.filteredData.reduce((acc, curr) => acc + curr.orcamento, 0);
+            const sumReal = state.filteredData.reduce((acc, curr) => acc + curr.realizado, 0);
+            const saldo = sumOrçado - sumReal; 
+            const pctExecucao = sumOrçado > 0 ? (sumReal / sumOrçado) * 100 : 0;
+
+            document.getElementById('kpi-orcado').textContent = formatBR(sumOrçado);
+            document.getElementById('kpi-realizado').textContent = formatBR(sumReal);
+            const elSaldo = document.getElementById('kpi-saldo'); const elSaldoBadge = document.getElementById('kpi-saldo-badge'); const elSaldoBorder = document.getElementById('kpi-saldo-border');
+            elSaldo.textContent = formatBR(saldo);
+            
+            if (saldo < 0) {
+                elSaldo.className = 'text-3xl font-bold text-red-400'; elSaldoBorder.className = 'absolute top-0 left-0 w-1 h-full bg-red-500';
+                elSaldoBadge.innerHTML = `<span class="badge bg-red-500/20 text-red-400 border border-red-500/30"><i class="fa-solid fa-arrow-down mr-1"></i> Prejuízo Orçamentário</span>`;
+            } else {
+                elSaldo.className = 'text-3xl font-bold text-emerald-400'; elSaldoBorder.className = 'absolute top-0 left-0 w-1 h-full bg-emerald-500';
+                elSaldoBadge.innerHTML = `<span class="badge bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"><i class="fa-solid fa-arrow-up mr-1"></i> Saldo Positivo</span>`;
+            }
+
+            document.getElementById('kpi-execucao').textContent = pctExecucao.toFixed(1) + '%';
+            document.getElementById('kpi-bar').style.width = Math.min(pctExecucao, 100) + '%';
+            if(pctExecucao > 100) document.getElementById('kpi-bar').classList.replace('bg-brand-purple', 'bg-red-500');
+            else document.getElementById('kpi-bar').classList.replace('bg-red-500', 'bg-brand-purple');
+        }
+
+        function getStatusInfo(variacaoPct) {
+            if (variacaoPct === Infinity || isNaN(variacaoPct)) return { text: 'Sem base', icon: 'fa-circle-question', color: 'text-gray-500', bg: 'bg-gray-500/10' };
+            if (variacaoPct > 10) return { text: `Aumento Crítico (${formatPct(variacaoPct)})`, icon: 'fa-circle-up', color: 'text-red-500', bg: 'bg-red-500/10' };
+            if (variacaoPct > 0 && variacaoPct <= 10) return { text: `Aumento (${formatPct(variacaoPct)})`, icon: 'fa-arrow-trend-up', color: 'text-orange-400', bg: 'bg-orange-500/10' };
+            if (variacaoPct === 0) return { text: `Estável (0,0%)`, icon: 'fa-minus', color: 'text-gray-400', bg: 'bg-gray-500/10' };
+            if (variacaoPct < 0 && variacaoPct >= -10) return { text: `Reduziu (${formatPct(variacaoPct)})`, icon: 'fa-arrow-trend-down', color: 'text-brand-cyan', bg: 'bg-cyan-500/10' };
+            return { text: `Queda Relevante (${formatPct(variacaoPct)})`, icon: 'fa-circle-down', color: 'text-emerald-400', bg: 'bg-emerald-500/10' };
+        }
+
+        // ==========================================
+        // 5. TABELAS DE DADOS
+        // ==========================================
+        function setupSorting(headersSelector, targetType, renderFn) {
+            document.querySelectorAll(headersSelector).forEach(th => {
+                const newTh = th.cloneNode(true); th.parentNode.replaceChild(newTh, th);
+                newTh.addEventListener('click', () => {
+                    const column = newTh.dataset.sort;
+                    let currentSort = targetType === 'status' ? state.sortStatus : state.sortMatriz;
+                    if (currentSort.column === column) {
+                        if (currentSort.direction === 'desc') currentSort.direction = 'asc';
+                        else if (currentSort.direction === 'asc') currentSort.direction = 'none';
+                        else currentSort.direction = 'desc';
+                    } else { currentSort.column = column; currentSort.direction = 'desc'; }
+                    renderFn(); 
+                });
+            });
+        }
+
+        function renderTableStatus() {
+            const grouped = {}; let indexTracker = 0;
+            state.filteredData.forEach(d => {
+                const key = `${d.conta}|${d.descricao}|${d.filial}`;
+                if (!grouped[key]) grouped[key] = { originalIndex: indexTracker++, conta: d.conta, descricao: d.descricao, filial: d.filial, orcamento: 0, realizado: 0 };
+                grouped[key].orcamento += d.orcamento; grouped[key].realizado += d.realizado;
+            });
+
+            let tableData = Object.values(grouped).map(row => {
+                row.saldo = row.orcamento - row.realizado;
+                row.variacaoNum = row.orcamento > 0 ? ((row.realizado - row.orcamento) / row.orcamento) * 100 : (row.realizado > 0 ? Infinity : 0);
+                return row;
+            });
+
+            const { column, direction } = state.sortStatus;
+            if (direction !== 'none') {
+                tableData.sort((a, b) => {
+                    let valA = a[column]; let valB = b[column];
+                    if (typeof valA === 'string') { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
+                    if (valA < valB) return direction === 'asc' ? -1 : 1;
+                    if (valA > valB) return direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            } else { tableData.sort((a, b) => a.originalIndex - b.originalIndex); }
+
+            const tbody = document.getElementById('tbody-status'); tbody.innerHTML = '';
+            tableData.forEach(row => {
+                const status = getStatusInfo(row.variacaoNum);
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-dark-hover transition-colors border-b border-dark-border">
+                        <td class="px-4 py-3 font-medium text-gray-400 bg-[#0B1120]">${row.conta}</td>
+                        <td class="px-4 py-3 font-medium text-white">${row.descricao}</td>
+                        <td class="px-4 py-3 text-brand-cyan">${row.filial}</td>
+                        <td class="px-4 py-3 text-right">${formatBR(row.orcamento)}</td>
+                        <td class="px-4 py-3 text-right text-white font-medium">${formatBR(row.realizado)}</td>
+                        <td class="px-4 py-3 text-right ${row.saldo < 0 ? 'text-red-400' : 'text-emerald-400'}">${formatBR(row.saldo)}</td>
+                        <td class="px-4 py-3"><span class="badge ${status.bg} ${status.color} border border-white/5 whitespace-nowrap"><i class="fa-solid ${status.icon} mr-1.5"></i> ${status.text}</span></td>
+                    </tr>
+                `);
+            });
+
+            document.querySelectorAll('th[data-target="status"]').forEach(th => {
+                const icon = th.querySelector('i');
+                if (th.dataset.sort === state.sortStatus.column && state.sortStatus.direction !== 'none') {
+                    icon.className = `fa-solid fa-sort-${state.sortStatus.direction === 'asc' ? 'up' : 'down'} ml-1 text-brand-cyan`;
+                    th.classList.add('text-white');
+                } else { icon.className = 'fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan'; th.classList.remove('text-white'); }
+            });
+            setupSorting('th[data-target="status"]', 'status', renderTableStatus);
+        }
+
+        window.toggleMatrixRow = function(descSafeId) {
+            const isExpanding = !state.expandedRows[descSafeId];
+            state.expandedRows[descSafeId] = isExpanding;
+            const icon = document.getElementById(`icon-${descSafeId}`);
+            if (icon) { if (isExpanding) icon.classList.add('expanded'); else icon.classList.remove('expanded'); }
+            document.querySelectorAll(`.child-of-${descSafeId}`).forEach(child => {
+                if (isExpanding) { child.classList.remove('hidden'); child.style.opacity = '0'; setTimeout(() => child.style.opacity = '1', 10); } 
+                else { child.classList.add('hidden'); }
+            });
+        };
+
+        function renderTableMatriz() {
+            let mesesParaMostrar = state.filters.month.length === 0 ? state.mesesDisponiveis : state.mesesDisponiveis.filter(m => state.filters.month.includes(m));
+            const grouped = {}; let indexTracker = 0;
+
+            state.filteredData.forEach(d => {
+                if (!grouped[d.descricao]) {
+                    grouped[d.descricao] = { originalIndex: indexTracker++, conta: d.conta, descricao: d.descricao, totalOrcado: 0, totalRealizado: 0, filiais: {} };
+                    mesesParaMostrar.forEach(m => grouped[d.descricao][m] = 0);
+                }
+                if(mesesParaMostrar.includes(d.mesStr)) grouped[d.descricao][d.mesStr] += d.realizado;
+                grouped[d.descricao].totalOrcado += d.orcamento; grouped[d.descricao].totalRealizado += d.realizado;
+
+                if (!grouped[d.descricao].filiais[d.filial]) {
+                    grouped[d.descricao].filiais[d.filial] = { filial: d.filial, totalOrcado: 0, totalRealizado: 0 };
+                    mesesParaMostrar.forEach(m => grouped[d.descricao].filiais[d.filial][m] = 0);
+                }
+                if(mesesParaMostrar.includes(d.mesStr)) grouped[d.descricao].filiais[d.filial][d.mesStr] += d.realizado;
+                grouped[d.descricao].filiais[d.filial].totalOrcado += d.orcamento; grouped[d.descricao].filiais[d.filial].totalRealizado += d.realizado;
+            });
+
+            let tableData = Object.values(grouped);
+            const { column, direction } = state.sortMatriz;
+            if (direction !== 'none') {
+                tableData.sort((a, b) => {
+                    let valA = a[column]; let valB = b[column];
+                    if (typeof valA === 'string') { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
+                    if (valA < valB) return direction === 'asc' ? -1 : 1;
+                    if (valA > valB) return direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            } else { tableData.sort((a, b) => a.originalIndex - b.originalIndex); }
+
+            let thHtml = `
+                <tr>
+                    <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="conta" data-target="matriz">Conta <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                    <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="descricao" data-target="matriz">Descrição <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                    <th class="px-4 py-3 text-right bg-[#0d1326] sortable group" data-sort="totalOrcado" data-target="matriz">Total Orçado <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                    <th class="px-4 py-3 text-right bg-[#0d1326] border-r border-dark-border sortable group" data-sort="totalRealizado" data-target="matriz">Total Realizado <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+            `;
+            mesesParaMostrar.forEach(m => thHtml += `<th class="px-4 py-3 text-right sortable text-gray-500 group bg-[#0B1120]" data-sort="${m}" data-target="matriz">${m} <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>`);
+            thHtml += `</tr>`;
+            document.getElementById('thead-matriz').innerHTML = thHtml;
+
+            const tbody = document.getElementById('tbody-matriz'); tbody.innerHTML = '';
+            tableData.forEach((row, i) => {
+                const descSafeId = `row_${i}`; const isExpanded = state.expandedRows[descSafeId] ? true : false;
+                
+                let trHtml = `
+                    <tr class="hover:bg-dark-hover transition-colors cursor-pointer border-b border-dark-border" onclick="toggleMatrixRow('${descSafeId}')" title="Clique para expandir/recolher">
+                        <td class="px-4 py-3 font-medium text-gray-400 whitespace-nowrap bg-[#0B1120]"><i id="icon-${descSafeId}" class="fa-solid fa-chevron-right text-brand-cyan mr-2 text-[10px] expand-icon ${isExpanded ? 'expanded' : ''}"></i>${row.conta}</td>
+                        <td class="px-4 py-3 font-bold text-white whitespace-nowrap">${row.descricao}</td>
+                        <td class="px-4 py-3 text-right text-gray-400 bg-[#0d1326]">${formatBR(row.totalOrcado)}</td>
+                        <td class="px-4 py-3 text-right font-bold text-brand-cyan bg-[#0d1326] border-r border-dark-border">${formatBR(row.totalRealizado)}</td>
+                `;
+                mesesParaMostrar.forEach(m => trHtml += `<td class="px-4 py-3 text-right font-medium text-gray-300">${formatBR(row[m])}</td>`);
+                trHtml += `</tr>`;
+                
+                const filiaisArray = Object.values(row.filiais).sort((a,b) => a.filial.localeCompare(b.filial));
+                filiaisArray.forEach((filialRow, index) => {
+                    const borderClass = index === filiaisArray.length - 1 ? 'border-b border-dark-border' : '';
+                    trHtml += `
+                        <tr class="${isExpanded ? '' : 'hidden'} child-of-${descSafeId} bg-[#060a14] transition-opacity duration-300 ${borderClass}">
+                            <td class="px-4 py-2 bg-[#0B1120]"><div class="w-full h-full border-r border-dark-border/50 border-dashed"></div></td>
+                            <td class="px-4 py-2 font-medium text-gray-400 text-[13px] pl-6 flex items-center gap-2"><i class="fa-solid fa-turn-up fa-rotate-90 text-gray-600"></i> ${filialRow.filial}</td>
+                            <td class="px-4 py-2 text-right text-gray-500 text-[13px] bg-[#0d1326]/50">${formatBR(filialRow.totalOrcado)}</td>
+                            <td class="px-4 py-2 text-right font-medium text-blue-400 text-[13px] bg-[#0d1326]/50 border-r border-dark-border">${formatBR(filialRow.totalRealizado)}</td>
+                    `;
+                    mesesParaMostrar.forEach(m => {
+                        const val = filialRow[m];
+                        trHtml += `<td class="px-4 py-2 text-right text-gray-400 text-[13px]">${val > 0 || val < 0 ? formatBR(val) : '<span class="text-gray-600">-</span>'}</td>`;
+                    });
+                    trHtml += `</tr>`;
+                });
+                tbody.insertAdjacentHTML('beforeend', trHtml);
+            });
+
+            document.querySelectorAll('th[data-target="matriz"]').forEach(th => {
+                const icon = th.querySelector('i');
+                if (th.dataset.sort === state.sortMatriz.column && state.sortMatriz.direction !== 'none') {
+                    icon.className = `fa-solid fa-sort-${state.sortMatriz.direction === 'asc' ? 'up' : 'down'} ml-1 text-brand-cyan`;
+                    th.classList.add('text-white');
+                } else { icon.className = 'fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan'; th.classList.remove('text-white'); }
+            });
+            setupSorting('th[data-target="matriz"]', 'matriz', renderTableMatriz);
+        }
+
+        // ==========================================
+        // 6. GRÁFICOS
+        // ==========================================
+        Chart.defaults.color = '#94a3b8';
+        function updateCharts() {
+            // Filiais
+            const filialGroup = {};
+            state.filteredData.forEach(d => {
+                if(!filialGroup[d.filial]) filialGroup[d.filial] = { orcado: 0, realizado: 0 };
+                filialGroup[d.filial].orcado += d.orcamento; filialGroup[d.filial].realizado += d.realizado;
+            });
+            const filiaisLabels = Object.keys(filialGroup).sort();
+            const dataOrcado = filiaisLabels.map(f => filialGroup[f].orcado);
+            const dataRealizado = filiaisLabels.map(f => filialGroup[f].realizado);
+
+            if(state.charts.filial) state.charts.filial.destroy();
+            state.charts.filial = new Chart(document.getElementById('chartFilial').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: filiaisLabels,
+                    datasets: [
+                        { label: 'Orçamento Previsto', data: dataOrcado, backgroundColor: 'rgba(56, 189, 248, 0.4)', borderColor: '#38bdf8', borderWidth: 1, borderRadius: 2, datalabels: { color: '#7dd3fc', align: 'end', anchor: 'end', formatter: formatKMBT, font: {size: 10, weight: '500'} } },
+                        { label: 'Realizado', data: dataRealizado, backgroundColor: '#0ea5e9', borderRadius: 2, datalabels: { color: '#bae6fd', align: 'end', anchor: 'end', formatter: formatKMBT, font: {size: 10, weight: 'bold'} } }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } }, plugins: { legend: { labels: { color: '#cbd5e1' } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatBR(ctx.raw)}` } } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { callback: v => formatKMBT(v) } }, x: { grid: { display: false } } }, animation: { duration: 600 } }
+            });
+
+            // Composição (Filtra apenas Clicando na Legenda)
+            let pizzaData = state.data.filter(d => {
+                const mMatch = state.filters.month.length === 0 || state.filters.month.includes(d.mesStr);
+                const bMatch = state.filters.branch.length === 0 || state.filters.branch.includes(d.filial);
+                return mMatch && bMatch;
+            });
+            const compGroup = {};
+            pizzaData.forEach(d => { compGroup[d.descricao] = (compGroup[d.descricao] || 0) + d.realizado; });
+            
+            let allComp = Object.entries(compGroup).sort((a,b) => b[1] - a[1]).filter(item => item[1] > 0);
+
+            const bgColors = allComp.map((item, i) => {
+                const baseColor = extendedPalette[i % extendedPalette.length];
+                if (state.filters.category.length > 0) {
+                    if (state.filters.category.includes(item[0])) return baseColor;
+                    return 'rgba(51, 65, 85, 0.4)'; 
+                }
+                return baseColor; 
+            });
+
+            if(state.charts.composicao) state.charts.composicao.destroy();
+            state.charts.composicao = new Chart(document.getElementById('chartComposicao').getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: allComp.map(i => i[0]), datasets: [{ data: allComp.map(i => i[1]), backgroundColor: bgColors, borderWidth: 2, borderColor: '#111827', hoverOffset: 0, datalabels: { display: false } }] },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, cutout: '65%',
+                    events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
+                    plugins: { 
+                        legend: { 
+                            position: 'right', align: 'start', labels: { boxWidth: 10, font: {size: 10}, color: '#cbd5e1', usePointStyle: true, pointStyle: 'circle' },
+                            onClick: function(e, legendItem, legend) {
+                                const label = legendItem.text;
+                                const isCtrl = e.native.ctrlKey || e.native.metaKey;
+
+                                if (isCtrl) {
+                                    if (state.filters.category.includes(label)) state.filters.category = state.filters.category.filter(c => c !== label);
+                                    else state.filters.category.push(label);
+                                } else {
+                                    if (state.filters.category.length === 1 && state.filters.category[0] === label) state.filters.category = []; 
+                                    else state.filters.category = [label];
+                                }
+
+                                if(state.filters.category.length > 0) {
+                                    document.getElementById('category-filter-badge').classList.remove('hidden');
+                                    document.getElementById('category-filter-badge').innerHTML = `<i class="fa-solid fa-chart-pie mr-1"></i> ${state.filters.category.length} Subgrupo(s)`;
+                                } else document.getElementById('category-filter-badge').classList.add('hidden');
+                                updateApp();
+                            }
+                        }, 
+                        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 10, callbacks: { label: (ctx) => ` ${formatBR(ctx.raw)}` } } 
+                    },
+                    onClick: (e) => { e.native.stopPropagation(); } 
+                }
+            });
+
+            // Evolução
+            const evolGroup = {};
+            state.filteredData.forEach(d => {
+                if(!evolGroup[d.mesNum]) evolGroup[d.mesNum] = { mes: d.mesStr, orcado: 0, realizado: 0 };
+                evolGroup[d.mesNum].orcado += d.orcamento; evolGroup[d.mesNum].realizado += d.realizado;
+            });
+            const numKeys = Object.keys(evolGroup).sort((a,b) => a-b);
+            const evolLabels = numKeys.map(k => evolGroup[k].mes);
+            const evolOrcado = numKeys.map(k => evolGroup[k].orcado);
+            const evolReal = numKeys.map(k => evolGroup[k].realizado);
+
+            if(state.charts.evolucao) state.charts.evolucao.destroy();
+            state.charts.evolucao = new Chart(document.getElementById('chartEvolucao').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: evolLabels,
+                    datasets: [
+                        { label: 'Orçamento', data: evolOrcado, borderColor: '#8b5cf6', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, tension: 0.3, datalabels: { display: false } },
+                        { label: 'Custo Realizado', data: evolReal, borderColor: '#06b6d4', backgroundColor: 'rgba(6, 182, 212, 0.1)', borderWidth: 3, pointBackgroundColor: '#0B1120', pointBorderColor: '#06b6d4', pointBorderWidth: 2, fill: true, tension: 0.3, datalabels: { align: 'bottom', anchor: 'bottom', offset: 10, font: { weight: 'bold', size: 11 }, formatter: (value, context) => { const orcado = context.chart.data.datasets[0].data[context.dataIndex]; if (!orcado || orcado === 0) return ''; const diff = (value - orcado) / orcado; if (diff === 0) return '0%'; return (diff > 0 ? '+' : '') + (diff * 100).toFixed(1).replace('.', ',') + '%'; }, color: (context) => context.dataset.data[context.dataIndex] > context.chart.data.datasets[0].data[context.dataIndex] ? '#f87171' : '#34d399' } }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: 20, top: 10 } }, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#cbd5e1' } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatBR(ctx.raw)}` } } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { callback: v => formatKMBT(v) } }, x: { grid: { display: false } } } }
+            });
+        }
+        
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active', 'text-brand-cyan', 'bg-cyan-900/20'));
+            document.getElementById(tabId).classList.remove('hidden');
+            const btn = document.getElementById(`btn-${tabId}`);
+            btn.classList.add('active', 'text-brand-cyan');
+            btn.classList.remove('text-gray-400');
+        }
+    </script>
+</body>
+</html>
