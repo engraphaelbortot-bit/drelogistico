@@ -41,23 +41,34 @@
         ::-webkit-scrollbar-track { background: #111827; }
         ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        
         .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
+
         .chart-container { position: relative; width: 100%; height: 320px; }
+        
+        /* Modificação Visual da Ordenação (Exclusiva por Coluna) */
         th.sortable { cursor: pointer; user-select: none; transition: all 0.2s ease; }
-        th.sortable:hover { background-color: rgba(255, 255, 255, 0.05); color: #06b6d4; }
+        th.sortable:hover { background-color: rgba(6, 182, 212, 0.1); color: #06b6d4; }
+        th.sort-active { color: #06b6d4 !important; background-color: rgba(6, 182, 212, 0.05); }
+        
         .tab-btn.active { border-bottom: 2px solid #06b6d4; color: #06b6d4; background-color: rgba(6, 182, 212, 0.1); }
-        .glow-card { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3); transition: transform 0.2s, box-shadow 0.2s; }
-        .glow-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 0 15px rgba(6, 182, 212, 0.15); }
+        .glow-card { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3); transition: transform 0.3s, box-shadow 0.3s; }
+        .glow-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 0 15px rgba(6, 182, 212, 0.15); transform: translateY(-2px); }
         .badge { display: inline-flex; align-items: center; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
         .expand-icon { transition: transform 0.3s ease; }
         .expand-icon.expanded { transform: rotate(90deg); }
         #login-overlay { backdrop-filter: blur(8px); }
         .cb-custom { accent-color: #06b6d4; cursor: pointer; width: 1rem; height: 1rem; }
+        
+        /* Legenda Customizada Animada */
+        .legend-item { transition: all 0.2s ease; }
+        .legend-item:hover { background-color: rgba(30, 41, 59, 0.8); transform: translateX(4px); }
     </style>
 
-    <!-- FIRESTORE DB MODULE (COM AS SUAS CHAVES) -->
+    <!-- FIRESTORE DB MODULE (CHAVES INTEGRADAS) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -77,7 +88,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Exporta para uso global no painel
         window.db = db;
         window.auth = auth;
         window.collection = collection;
@@ -109,11 +119,11 @@
             <form id="login-form" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-400 mb-1"><i class="fa-solid fa-user mr-1 text-brand-cyan"></i> Usuário</label>
-                    <input type="text" id="login-user" class="w-full bg-[#0B1120] border border-dark-border text-white rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-transparent block p-2.5 outline-none transition-all" placeholder="Digite o usuário">
+                    <input type="text" id="login-user" class="w-full bg-[#0B1120] border border-dark-border text-white rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-transparent block p-2.5 outline-none transition-all" placeholder="Digite o usuário (logística)">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-400 mb-1"><i class="fa-solid fa-lock mr-1 text-brand-cyan"></i> Senha</label>
-                    <input type="password" id="login-pass" class="w-full bg-[#0B1120] border border-dark-border text-white rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-transparent block p-2.5 outline-none transition-all" placeholder="••••••••">
+                    <input type="password" id="login-pass" class="w-full bg-[#0B1120] border border-dark-border text-white rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-transparent block p-2.5 outline-none transition-all" placeholder="•••••••• (log123)">
                 </div>
                 <div id="login-error" class="text-red-400 text-sm hidden font-medium text-center py-2 bg-red-500/10 rounded border border-red-500/20">
                     <i class="fa-solid fa-circle-exclamation mr-1"></i> Credenciais inválidas.
@@ -138,17 +148,18 @@
                 </div>
             </div>
             
-            <div class="flex flex-wrap items-center gap-3">
-                <!-- Filtros -->
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Filtros Globais -->
                 <div class="flex items-center bg-[#0B1120] p-1.5 rounded-lg border border-dark-border relative">
                     <div id="category-filter-badge" class="hidden absolute -top-3 left-2 bg-brand-purple text-white text-[10px] px-2 py-0.5 rounded-full shadow-md z-10 animate-pulse border border-purple-400/50">
                         <i class="fa-solid fa-chart-pie mr-1"></i> Filtro de Subgrupo Ativo
                     </div>
                     
+                    <!-- Dropdown Meses -->
                     <div class="relative custom-dropdown" id="dropdown-container-month">
-                        <button onclick="toggleDropdown('menu-month')" class="flex items-center justify-between w-40 bg-transparent text-sm text-gray-200 font-medium px-3 py-1 outline-none cursor-pointer hover:text-white border border-transparent hover:border-dark-border rounded">
+                        <button onclick="toggleDropdown('menu-month')" class="flex items-center justify-between w-32 bg-transparent text-sm text-gray-200 font-medium px-2 py-1 outline-none cursor-pointer hover:text-white border border-transparent hover:border-dark-border rounded">
                             <span id="label-month" class="truncate">Meses (Todos)</span>
-                            <i class="fa-solid fa-chevron-down text-xs text-brand-cyan ml-2"></i>
+                            <i class="fa-solid fa-chevron-down text-xs text-brand-cyan ml-1"></i>
                         </button>
                         <div id="menu-month" class="dropdown-menu hidden absolute top-full left-0 mt-1 w-48 bg-dark-menu border border-dark-border rounded-lg shadow-xl py-2 z-50">
                             <div class="px-3 pb-2 mb-2 border-b border-dark-border">
@@ -162,13 +173,33 @@
                     </div>
 
                     <div class="w-px h-5 bg-dark-border mx-1"></div>
-                    
-                    <div class="relative custom-dropdown" id="dropdown-container-branch">
-                        <button onclick="toggleDropdown('menu-branch')" class="flex items-center justify-between w-40 bg-transparent text-sm text-gray-200 font-medium px-3 py-1 outline-none cursor-pointer hover:text-white border border-transparent hover:border-dark-border rounded">
-                            <span id="label-branch" class="truncate">Filial (Todas)</span>
-                            <i class="fa-solid fa-chevron-down text-xs text-brand-cyan ml-2"></i>
+
+                    <!-- Dropdown CD -->
+                    <div class="relative custom-dropdown" id="dropdown-container-cd">
+                        <button onclick="toggleDropdown('menu-cd')" class="flex items-center justify-between w-36 bg-transparent text-sm text-gray-200 font-medium px-2 py-1 outline-none cursor-pointer hover:text-white border border-transparent hover:border-dark-border rounded">
+                            <span id="label-cd" class="truncate">CDs (Todos)</span>
+                            <i class="fa-solid fa-chevron-down text-xs text-brand-cyan ml-1"></i>
                         </button>
-                        <div id="menu-branch" class="dropdown-menu hidden absolute top-full left-0 mt-1 w-56 bg-dark-menu border border-dark-border rounded-lg shadow-xl py-2 z-50">
+                        <div id="menu-cd" class="dropdown-menu hidden absolute top-full left-0 mt-1 w-48 bg-dark-menu border border-dark-border rounded-lg shadow-xl py-2 z-50">
+                            <div class="px-3 pb-2 mb-2 border-b border-dark-border">
+                                <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:text-white">
+                                    <input type="checkbox" id="check-all-cd" class="cb-custom" checked onchange="toggleAllFilters('cd', this.checked)">
+                                    <span class="font-semibold">Selecionar Todos</span>
+                                </label>
+                            </div>
+                            <div id="list-cd" class="max-h-48 overflow-y-auto custom-scroll px-2 space-y-1"></div>
+                        </div>
+                    </div>
+
+                    <div class="w-px h-5 bg-dark-border mx-1"></div>
+                    
+                    <!-- Dropdown Filiais -->
+                    <div class="relative custom-dropdown" id="dropdown-container-branch">
+                        <button onclick="toggleDropdown('menu-branch')" class="flex items-center justify-between w-36 bg-transparent text-sm text-gray-200 font-medium px-2 py-1 outline-none cursor-pointer hover:text-white border border-transparent hover:border-dark-border rounded">
+                            <span id="label-branch" class="truncate">Filial (Todas)</span>
+                            <i class="fa-solid fa-chevron-down text-xs text-brand-cyan ml-1"></i>
+                        </button>
+                        <div id="menu-branch" class="dropdown-menu hidden absolute top-full right-0 mt-1 w-56 bg-dark-menu border border-dark-border rounded-lg shadow-xl py-2 z-50">
                             <div class="px-3 pb-2 mb-2 border-b border-dark-border">
                                 <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:text-white">
                                     <input type="checkbox" id="check-all-branch" class="cb-custom" checked onchange="toggleAllFilters('branch', this.checked)">
@@ -179,7 +210,7 @@
                         </div>
                     </div>
 
-                    <button id="btn-reset" onclick="resetAllFilters()" class="bg-dark-border hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 text-gray-300 px-2.5 py-1 rounded text-sm transition-all border border-transparent ml-1" title="Limpar Todos os Filtros">
+                    <button id="btn-reset" onclick="resetAllFilters()" class="bg-dark-border hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 text-gray-300 px-2 py-1 rounded text-sm transition-all border border-transparent ml-1" title="Limpar Todos os Filtros">
                         <i class="fa-solid fa-filter-circle-xmark"></i>
                     </button>
                 </div>
@@ -214,7 +245,7 @@
                 <i class="fa-solid fa-circle-info text-2xl"></i>
                 <div>
                     <h3 class="font-bold text-white">Banco de Dados Vazio</h3>
-                    <p class="text-sm">O sistema foi conectado com sucesso, mas ainda não há dados na nuvem. Clique em "Enviar Nova Base" no topo da tela para carregar o seu Excel. Feito isso, toda sua equipe já conseguirá visualizar!</p>
+                    <p class="text-sm">O sistema conectou-se à nuvem com sucesso, mas não há dados. Clique em "Enviar Nova Base" para carregar o seu Excel.</p>
                 </div>
             </div>
             <i class="fa-solid fa-arrow-up text-xl animate-bounce"></i>
@@ -236,7 +267,7 @@
                 </div>
                 <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full" id="kpi-saldo-border"></div>
-                    <p class="text-sm font-medium text-gray-400 mb-1">Saldo Líquido (Real vs Orçado)</p>
+                    <p class="text-sm font-medium text-gray-400 mb-1">Diferença (Real vs Orçado)</p>
                     <h2 class="text-3xl font-bold" id="kpi-saldo">R$ 0,00</h2>
                     <div class="mt-2 inline-flex" id="kpi-saldo-badge"></div>
                 </div>
@@ -252,36 +283,69 @@
                 </div>
             </section>
 
-            <!-- Charts -->
+            <!-- ROW 1: Gráfico CD (Esq) + Gráfico Pizza (Dir) -->
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card lg:col-span-2 flex flex-col">
+                <!-- Gráfico CD -->
+                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col lg:col-span-2">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-map-location-dot text-brand-cyan"></i> Desempenho Comparativo entre Filiais
+                            <i class="fa-solid fa-layer-group text-brand-purple"></i> Comparativo por Centros de Distribuição
                         </h3>
                     </div>
-                    <div class="chart-container flex-grow" style="height: 350px;"><canvas id="chartFilial"></canvas></div>
+                    <div class="chart-container flex-grow" style="height: 350px;"><canvas id="chartCD"></canvas></div>
                 </div>
 
-                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col relative group">
+                <!-- Gráfico Pizza (Com Legenda Customizada Animada) -->
+                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col relative group lg:col-span-1">
                     <div class="flex justify-between items-center mb-2">
                         <h3 class="text-lg font-semibold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-chart-pie text-brand-cyan"></i> Distribuição por Subgrupo
+                            <i class="fa-solid fa-chart-pie text-brand-cyan"></i> Distribuição
                         </h3>
                     </div>
-                    <div class="text-xs text-gray-500 mb-2 italic bg-dark-border/30 p-2 rounded border border-dark-border leading-relaxed">
-                        <i class="fa-solid fa-hand-pointer mr-1 text-brand-cyan"></i> Clique no <strong>nome na legenda</strong> abaixo para filtrar.<br>
-                        <i class="fa-solid fa-keyboard mr-1 mt-1 text-brand-purple"></i> Segure <kbd class="bg-gray-800 px-1 rounded border border-gray-600 text-[10px]">Ctrl</kbd> e clique em vários para seleção múltipla.
+                    <div class="text-[11px] text-gray-500 mb-2 italic bg-dark-border/30 p-2 rounded border border-dark-border leading-relaxed">
+                        <i class="fa-solid fa-hand-pointer text-brand-cyan"></i> <strong>Passe o rato e Clique</strong> no nome da descrição para filtrar.<br>
+                        <i class="fa-solid fa-keyboard text-brand-purple"></i> <kbd class="bg-gray-800 px-1 rounded text-[10px]">Ctrl</kbd> + Clique para múltipla seleção.
                     </div>
-                    <div class="chart-container flex-grow flex items-center justify-center mt-2"><canvas id="chartComposicao"></canvas></div>
+                    
+                    <!-- Layout interno da Pizza: Gráfico em cima/lado, Legenda HTML rolável do outro -->
+                    <div class="flex flex-col h-[300px] gap-2 mt-2">
+                        <!-- Canvas -->
+                        <div class="w-full h-1/2 relative flex justify-center items-center">
+                            <div class="h-[150px] w-[150px] relative"><canvas id="chartComposicao"></canvas></div>
+                        </div>
+                        <!-- Legenda Custom HTML Vertical -->
+                        <div id="custom-legend-box" class="w-full h-1/2 overflow-y-auto custom-scroll flex flex-col gap-1 p-2 bg-[#0B1120] border border-dark-border rounded-lg shadow-inner">
+                            <!-- Injetado por JS -->
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <!-- Trend Chart -->
+            <!-- ROW 2: Gráfico Filial (Full Width) -->
+            <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-map-location-dot text-brand-cyan"></i> Desempenho Detalhado por Filial
+                    </h3>
+                </div>
+                <div class="chart-container flex-grow" style="height: 300px;"><canvas id="chartFilial"></canvas></div>
+            </section>
+
+            <!-- ROW 3: Gráfico Descrições (NOVO - Full Width) -->
+            <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-amber-500"></i> Orçamento vs Realizado por Descrição (Contas)
+                    </h3>
+                </div>
+                <div class="chart-container flex-grow" style="height: 350px;"><canvas id="chartDescricoes"></canvas></div>
+            </section>
+
+            <!-- ROW 4: Evolução Mensal (Full Width) -->
             <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-chart-line text-brand-cyan"></i> Evolução Mensal e Variação Percentual
+                        <i class="fa-solid fa-chart-line text-brand-cyan"></i> Evolução Mensal e Variação
                     </h3>
                 </div>
                 <div class="chart-container" style="height: 300px;"><canvas id="chartEvolucao"></canvas></div>
@@ -300,18 +364,19 @@
 
                 <div id="tab-status" class="tab-content block overflow-x-auto">
                     <div class="text-xs text-brand-cyan bg-[#0B1120] py-2 px-4 border-b border-dark-border italic flex justify-between">
-                        <span><i class="fa-solid fa-circle-info mr-1"></i> Clique no cabeçalho para ordenar.</span>
+                        <span><i class="fa-solid fa-circle-info mr-1"></i> Ordenação Exclusiva: Clicar numa coluna zera a ordem das outras.</span>
                     </div>
                     <table class="w-full text-sm text-left text-gray-300">
                         <thead class="text-xs uppercase bg-[#0B1120] text-gray-400 sticky top-0 border-b border-dark-border z-10">
                             <tr>
-                                <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="conta" data-target="status">Conta <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
-                                <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="descricao" data-target="status">Descrição <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
-                                <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="filial" data-target="status">Filial <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
-                                <th class="px-4 py-3 text-right sortable group bg-[#0B1120]" data-sort="orcamento" data-target="status">Orçado <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
-                                <th class="px-4 py-3 text-right sortable group bg-[#0B1120]" data-sort="realizado" data-target="status">Realizado <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
-                                <th class="px-4 py-3 text-right sortable group bg-[#0B1120]" data-sort="saldo" data-target="status">Saldo <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
-                                <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="variacaoNum" data-target="status">Variação / Status <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                <th class="px-4 py-3 sortable group" data-sort="conta" data-target="status">Conta <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
+                                <th class="px-4 py-3 sortable group" data-sort="descricao" data-target="status">Descrição <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
+                                <th class="px-4 py-3 sortable group" data-sort="cd" data-target="status">CD <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
+                                <th class="px-4 py-3 sortable group" data-sort="filial" data-target="status">Filial <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
+                                <th class="px-4 py-3 text-right sortable group" data-sort="orcamento" data-target="status">Orçado <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
+                                <th class="px-4 py-3 text-right sortable group" data-sort="realizado" data-target="status">Realizado <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
+                                <th class="px-4 py-3 text-right sortable group" data-sort="saldo" data-target="status">Diferença <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
+                                <th class="px-4 py-3 sortable group" data-sort="variacaoNum" data-target="status">Variação / Status <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
                             </tr>
                         </thead>
                         <tbody id="tbody-status" class="divide-y divide-dark-border"></tbody>
@@ -320,7 +385,7 @@
 
                 <div id="tab-matriz" class="tab-content hidden overflow-x-auto">
                     <div class="text-xs text-brand-cyan bg-[#0B1120] py-2 px-4 border-b border-dark-border italic">
-                        <i class="fa-solid fa-hand-pointer mr-1"></i> Clique sobre a linha da Descrição para expandir e ver os custos detalhados por Filial.
+                        <i class="fa-solid fa-hand-pointer mr-1"></i> Clique sobre a linha da Descrição para ver as filiais. Inclui nova coluna de <strong>Diferença</strong>.
                     </div>
                     <table class="w-full text-sm text-left text-gray-300">
                         <thead class="text-xs uppercase bg-[#0B1120] text-gray-400 sticky top-0 border-b border-dark-border z-10" id="thead-matriz"></thead>
@@ -340,7 +405,7 @@
         Chart.register(ChartDataLabels);
 
         // ==========================================
-        // 1. SISTEMA DE LOGIN E INICIALIZAÇÃO DB
+        // 1. SISTEMA DE LOGIN E INIT
         // ==========================================
         let isUserAuthenticated = false;
 
@@ -349,7 +414,6 @@
             const user = document.getElementById('login-user').value;
             const pass = document.getElementById('login-pass').value;
             
-            // USUÁRIO E SENHA PADRÃO
             if (user.toLowerCase() === 'logística' && pass === 'log123') {
                 document.getElementById('login-overlay').style.opacity = '0';
                 setTimeout(() => document.getElementById('login-overlay').style.display = 'none', 300);
@@ -375,18 +439,37 @@
         }
 
         // ==========================================
-        // 2. LÓGICA CLOUD E SINCRONIZAÇÃO
+        // 2. REGRAS DE NEGÓCIO E LÓGICA DE DADOS
         // ==========================================
         const mesesNomesGlobais = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
         const extendedPalette = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#f43f5e', '#84cc16', '#14b8a6', '#6366f1', '#d946ef', '#f97316', '#eab308', '#22c55e', '#0ea5e9', '#a855f7', '#fb7185', '#bef264', '#2dd4bf', '#818cf8', '#e879f9', '#fb923c'];
 
+        // MAPEAMENTO EXATO DOS NOME DAS CIDADES/CDs CONFORME SOLICITADO
+        const CD_MAPPING = {
+            'API': 'Pinhais/PR',
+            'TPH': 'Pinhais/PR',
+            'MCD': 'São José/SC',
+            'TSJ': 'São José/SC',
+            'TBE': 'Betim/MG',
+            'TCA': 'Betim/MG',
+            'TBL': 'Campinas/SP',
+            'TCG': 'Campinas/SP',
+            'CTD': 'Curitiba/PR',
+            'ABC': 'Matriz/SP'
+        };
+
+        function getCD(filialName) {
+            const f = String(filialName).trim().toUpperCase();
+            return CD_MAPPING[f] || `CD ${f}`; 
+        }
+
         let state = {
             data: [], filteredData: [],
-            mesesDisponiveis: [], filiaisDisponiveis: [],
-            filters: { month: [], branch: [], category: [] },
+            mesesDisponiveis: [], filiaisDisponiveis: [], cdsDisponiveis: [],
+            filters: { month: [], branch: [], cd: [], category: [] },
             sortStatus: { column: 'none', direction: 'none' }, 
             sortMatriz: { column: 'none', direction: 'none' },
-            charts: { filial: null, composicao: null, evolucao: null },
+            charts: { filial: null, cd: null, composicao: null, evolucao: null, descricoes: null },
             expandedRows: {}
         };
 
@@ -404,16 +487,13 @@
             if (isUserAuthenticated) fetchDataFromCloud();
         });
 
-        // LEITURA DO FIRESTORE
+        // LER NUVEM
         async function fetchDataFromCloud() {
             document.getElementById('sync-status').textContent = 'Lendo banco de dados da nuvem...';
-            
             try {
-                // Coleção onde os dados estão salvos (agora usando auth anonima)
                 const userUid = window.auth.currentUser?.uid;
                 if (!userUid) throw new Error("Usuário não autenticado no banco");
 
-                // Buscando da coleção global (para todos verem os mesmos dados)
                 const lancamentosRef = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'lancamentos');
                 const querySnapshot = await window.getDocs(lancamentosRef);
                 
@@ -424,59 +504,38 @@
                     processRawData(rawDataFromCloud, false);
                     document.getElementById('last-update').innerHTML = `<i class="fa-solid fa-cloud-check text-emerald-400 mr-1"></i> Sincronizado (Cloud)`;
                 } else {
-                    // O BANCO ESTÁ VAZIO
-                    document.getElementById('loading-state').classList.add('hidden');
-                    document.getElementById('empty-state-alert').classList.remove('hidden');
-                    document.getElementById('empty-state-alert').classList.add('flex');
+                    seedDatabaseFromLocalCSV();
                 }
             } catch (error) {
-                console.error("Erro na leitura Cloud:", error);
-                document.getElementById('sync-status').textContent = 'Erro ao ler nuvem. Verifique o Firebase.';
-                setTimeout(() => {
-                    document.getElementById('loading-state').classList.add('hidden');
-                    document.getElementById('empty-state-alert').classList.remove('hidden');
-                    document.getElementById('empty-state-alert').classList.add('flex');
-                }, 2000);
+                console.error("Erro Nuvem:", error);
+                seedDatabaseFromLocalCSV();
             }
         }
 
-        // SALVAR NA NUVEM (FIRESTORE) - Disparado quando você faz upload do Excel
+        // SALVAR NUVEM
         async function uploadDataToCloud(dataArray) {
             document.getElementById('empty-state-alert').style.display = 'none';
             document.getElementById('empty-state-alert').classList.remove('flex');
             document.getElementById('loading-state').classList.remove('hidden');
             document.getElementById('dashboard-content').classList.add('hidden');
-            document.getElementById('sync-status').textContent = `Enviando ${dataArray.length} registros para a nuvem... (Isso pode levar alguns segundos)`;
+            document.getElementById('sync-status').textContent = `Enviando novos registros para a nuvem...`;
 
             try {
-                const userUid = window.auth.currentUser?.uid;
-                if (!userUid) return;
-
                 const batches = [];
                 let currentBatch = window.writeBatch(window.db);
                 let opCount = 0;
 
                 for (let i = 0; i < dataArray.length; i++) {
                     const item = dataArray[i];
-                    // Gerar um ID seguro pra linha (Mês + Filial + Conta)
-                    const safeFilial = item.filial.replace(/[^a-zA-Z0-9]/g, '');
-                    const safeConta = item.conta.replace(/[^a-zA-Z0-9]/g, '');
-                    const docId = `L-${item.mesStr}-${safeFilial}-${safeConta}`;
-                    
+                    // Criando ID seguro
+                    const docId = `L-${item.mesStr}-${item.filial.replace(/[^a-zA-Z0-9]/g, '')}-${item.conta.replace(/[^a-zA-Z0-9]/g, '')}`;
                     const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'lancamentos', docId);
                     
-                    currentBatch.set(docRef, item);
-                    opCount++;
+                    currentBatch.set(docRef, item); opCount++;
 
-                    if (opCount === 450) { // O limite do firebase é 500 por lote
-                        batches.push(currentBatch);
-                        currentBatch = window.writeBatch(window.db);
-                        opCount = 0;
-                    }
+                    if (opCount === 450) { batches.push(currentBatch); currentBatch = window.writeBatch(window.db); opCount = 0; }
                 }
                 if (opCount > 0) batches.push(currentBatch);
-
-                // Envia todos os lotes pra nuvem
                 for (let batch of batches) { await batch.commit(); }
 
                 document.getElementById('sync-status').textContent = 'Nuvem atualizada com sucesso!';
@@ -487,31 +546,41 @@
                 }, 1000);
 
             } catch (e) {
-                console.error("Erro Upload Cloud:", e);
-                alert("Erro ao salvar na nuvem. Verifique suas regras do Firebase.");
+                alert("Erro ao salvar na nuvem. Verifique o console.");
                 document.getElementById('loading-state').classList.add('hidden');
                 document.getElementById('dashboard-content').classList.remove('hidden');
             }
         }
 
-        // ==========================================
-        // 3. PROCESSAMENTO DE EXCEL / CSV NO BROWSER
-        // ==========================================
+        function seedDatabaseFromLocalCSV() {
+            document.getElementById('sync-status').textContent = 'Buscando base semente (base_dados.csv)...';
+            fetch('base_dados.csv')
+                .then(response => { if (!response.ok) throw new Error('Não encontrado'); return response.text(); })
+                .then(csvText => {
+                    Papa.parse(csvText, {
+                        header: true, skipEmptyLines: true,
+                        complete: function(results) { processRawData(results.data, true); }
+                    });
+                }).catch(error => {
+                    document.getElementById('loading-state').classList.add('hidden');
+                    document.getElementById('empty-state-alert').classList.remove('hidden');
+                    document.getElementById('empty-state-alert').classList.add('flex');
+                });
+        }
+
+        // IMPORTAÇÃO MANUAL PLANILHA
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             const btn = event.target.previousElementSibling;
             const originalContent = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Analisando Excel...`;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Processando...`;
 
             if (file.name.endsWith('.csv')) {
                 Papa.parse(file, {
                     header: true, skipEmptyLines: true,
-                    complete: function(results) {
-                        processRawData(results.data, true); // true = Sobe pra Nuvem
-                        btn.innerHTML = originalContent; event.target.value = '';
-                    }
+                    complete: function(results) { processRawData(results.data, true); btn.innerHTML = originalContent; event.target.value = ''; }
                 });
             } else {
                 const reader = new FileReader();
@@ -520,12 +589,8 @@
                         const data = new Uint8Array(e.target.result);
                         const workbook = XLSX.read(data, {type: 'array', cellDates: true});
                         const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                        if(json.length > 0) processRawData(json, true); // true = Sobe pra Nuvem
-                    } catch (err) {
-                        console.error(err); alert("Erro ao ler Excel.");
-                    } finally {
-                        btn.innerHTML = originalContent; event.target.value = ''; 
-                    }
+                        if(json.length > 0) processRawData(json, true);
+                    } catch (err) { alert("Erro ao ler Excel."); } finally { btn.innerHTML = originalContent; event.target.value = ''; }
                 };
                 reader.readAsArrayBuffer(file);
             }
@@ -538,14 +603,14 @@
             if (s === '-' || s.toLowerCase() === 'nan') return 0;
             if (s.includes(',') && !s.includes('.')) s = s.replace(',', '.');
             else if (s.includes(',') && s.includes('.')) s = s.replace(/\./g, '').replace(',', '.');
-            let num = parseFloat(s);
-            return isNaN(num) ? 0 : num;
+            let num = parseFloat(s); return isNaN(num) ? 0 : num;
         }
 
         function processRawData(rawData, shouldUploadToCloud = false) {
             let processed = [];
             let mesesSet = new Set();
             let filiaisSet = new Set();
+            let cdsSet = new Set();
 
             rawData.forEach((row) => {
                 const cleanRow = {};
@@ -560,11 +625,8 @@
                         if (dataRef instanceof Date) { mesNumFormatado = dataRef.getMonth() + 1; } 
                         else {
                             const strData = String(dataRef).trim();
-                            if (strData.includes('-')) {
-                                const p = strData.split('-'); if (p.length >= 2) mesNumFormatado = parseInt(p[1], 10);
-                            } else if (strData.includes('/')) {
-                                const p = strData.split('/'); if (p.length >= 2) mesNumFormatado = parseInt(p[1], 10);
-                            }
+                            if (strData.includes('-')) { const p = strData.split('-'); if (p.length >= 2) mesNumFormatado = parseInt(p[1], 10); } 
+                            else if (strData.includes('/')) { const p = strData.split('/'); if (p.length >= 2) mesNumFormatado = parseInt(p[1], 10); }
                         }
                         if(mesNumFormatado >= 1 && mesNumFormatado <= 12) mesStrFormatado = mesesNomesGlobais[mesNumFormatado - 1];
                     }
@@ -576,10 +638,13 @@
                 let realizadoVal = cleanRow['REALIZADO'] !== undefined && typeof cleanRow['REALIZADO'] === 'number' ? cleanRow['REALIZADO'] : parseFinanceValue(cleanRow['REALIZADO']);
                 const filialVal = cleanRow['FILIAL'] ? String(cleanRow['FILIAL']).trim() : 'S/ Filial';
                 
+                const cdVal = getCD(filialVal);
+
                 processed.push({
                     conta: String(cleanRow['CONTA SICF'] || cleanRow['CONTA'] || '-').trim(),
                     descricao: String(cleanRow['DESCRIÇÃO'] || cleanRow['DESCRICAO'] || '-').trim(),
                     filial: filialVal,
+                    cd: cdVal,
                     mesNum: mesNumFormatado,
                     mesStr: mesStrFormatado,
                     orcamento: orcamentoVal,
@@ -589,7 +654,6 @@
 
             if (processed.length === 0) return;
 
-            // Se for upload novo, junta os dados antigos com os novos
             if (shouldUploadToCloud && state.data.length > 0) {
                 state.data = [...state.data, ...processed];
                 uploadDataToCloud(processed); 
@@ -598,9 +662,10 @@
                 if(shouldUploadToCloud) uploadDataToCloud(processed);
             }
 
-            state.data.forEach(d => { mesesSet.add(d.mesStr); filiaisSet.add(d.filial); });
+            state.data.forEach(d => { mesesSet.add(d.mesStr); filiaisSet.add(d.filial); cdsSet.add(d.cd); });
             state.mesesDisponiveis = Array.from(mesesSet).sort((a, b) => mesesNomesGlobais.indexOf(a) - mesesNomesGlobais.indexOf(b));
             state.filiaisDisponiveis = Array.from(filiaisSet).sort();
+            state.cdsDisponiveis = Array.from(cdsSet).sort();
             
             resetAllFilters(false); buildFilterUI();
 
@@ -612,13 +677,19 @@
         }
 
         // ==========================================
-        // 4. UI DE FILTROS E ATUALIZAÇÕES
+        // 3. UI DOS FILTROS E ATUALIZAÇÕES
         // ==========================================
         function buildFilterUI() {
             const listM = document.getElementById('list-month'); listM.innerHTML = '';
             state.mesesDisponiveis.forEach(m => {
                 const isChecked = state.filters.month.length === 0 || state.filters.month.includes(m);
                 listM.insertAdjacentHTML('beforeend', `<label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-white px-1 py-1 rounded hover:bg-dark-border/50"><input type="checkbox" class="cb-custom cb-month" value="${m}" ${isChecked ? 'checked' : ''} onchange="handleItemCheck('month')"><span>${m}</span></label>`);
+            });
+
+            const listCD = document.getElementById('list-cd'); listCD.innerHTML = '';
+            state.cdsDisponiveis.forEach(cd => {
+                const isChecked = state.filters.cd.length === 0 || state.filters.cd.includes(cd);
+                listCD.insertAdjacentHTML('beforeend', `<label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-white px-1 py-1 rounded hover:bg-dark-border/50"><input type="checkbox" class="cb-custom cb-cd" value="${cd}" ${isChecked ? 'checked' : ''} onchange="handleItemCheck('cd')"><span class="truncate">${cd}</span></label>`);
             });
 
             const listF = document.getElementById('list-branch'); listF.innerHTML = '';
@@ -651,22 +722,26 @@
             else if(state.filters.month.length === 1) lMonth.textContent = state.filters.month[0];
             else lMonth.textContent = `Meses (${state.filters.month.length})`;
 
+            const lCD = document.getElementById('label-cd');
+            if(state.filters.cd.length === 0) lCD.textContent = "CDs (Todos)";
+            else if(state.filters.cd.length === 1) lCD.textContent = state.filters.cd[0];
+            else lCD.textContent = `CDs (${state.filters.cd.length})`;
+
             const lBranch = document.getElementById('label-branch');
             if(state.filters.branch.length === 0) lBranch.textContent = "Filial (Todas)";
             else if(state.filters.branch.length === 1) lBranch.textContent = state.filters.branch[0];
             else lBranch.textContent = `Filiais (${state.filters.branch.length})`;
-
-            if(Array.from(document.querySelectorAll('.cb-month')).every(c=>!c.checked)) lMonth.textContent = "Nenhum";
-            if(Array.from(document.querySelectorAll('.cb-branch')).every(c=>!c.checked)) lBranch.textContent = "Nenhuma";
         }
 
         function resetAllFilters(triggerUpdate = true) {
-            state.filters = { month: [], branch: [], category: [] };
+            state.filters = { month: [], branch: [], cd: [], category: [] };
             document.getElementById('category-filter-badge').classList.add('hidden');
             if (state.data.length > 0) {
-                if(document.getElementById('check-all-month')) document.getElementById('check-all-month').checked = true;
-                if(document.getElementById('check-all-branch')) document.getElementById('check-all-branch').checked = true;
-                document.querySelectorAll('.cb-month, .cb-branch').forEach(cb => cb.checked = true);
+                ['month', 'branch', 'cd'].forEach(type => {
+                    const checkAll = document.getElementById(`check-all-${type}`);
+                    if (checkAll) checkAll.checked = true;
+                    document.querySelectorAll(`.cb-${type}`).forEach(cb => cb.checked = true);
+                });
                 updateFilterLabels();
                 if(triggerUpdate) updateApp();
             }
@@ -674,22 +749,29 @@
 
         function updateApp() {
             if(state.data.length === 0) return;
-            const noMonths = document.querySelectorAll('.cb-month').length > 0 && Array.from(document.querySelectorAll('.cb-month')).every(c=>!c.checked);
-            const noBranches = document.querySelectorAll('.cb-branch').length > 0 && Array.from(document.querySelectorAll('.cb-branch')).every(c=>!c.checked);
+            
+            const checksEmpty = ['month', 'branch', 'cd'].some(type => {
+                const cbs = document.querySelectorAll(`.cb-${type}`);
+                return cbs.length > 0 && Array.from(cbs).every(c => !c.checked);
+            });
 
-            if (noMonths || noBranches) state.filteredData = [];
-            else {
+            if (checksEmpty) {
+                state.filteredData = [];
+            } else {
                 state.filteredData = state.data.filter(d => {
                     const matchM = state.filters.month.length === 0 || state.filters.month.includes(d.mesStr);
+                    const matchC = state.filters.cd.length === 0 || state.filters.cd.includes(d.cd);
                     const matchB = state.filters.branch.length === 0 || state.filters.branch.includes(d.filial);
-                    const matchC = state.filters.category.length === 0 || state.filters.category.includes(d.descricao);
-                    return matchM && matchB && matchC;
+                    const matchCat = state.filters.category.length === 0 || state.filters.category.includes(d.descricao);
+                    return matchM && matchC && matchB && matchCat;
                 });
             }
+
             updateKPIs(); renderTableStatus(); renderTableMatriz(); updateCharts();
             
             let fInfo = [];
             if(state.filters.month.length > 0) fInfo.push(`${state.filters.month.length} Mês(es)`);
+            if(state.filters.cd.length > 0) fInfo.push(`${state.filters.cd.length} CD(s)`);
             if(state.filters.branch.length > 0) fInfo.push(`${state.filters.branch.length} Filial(is)`);
             if(state.filters.category.length > 0) fInfo.push(`${state.filters.category.length} Subgrupo(s)`);
             document.getElementById('active-filters-info').innerHTML = fInfo.length > 0 ? `<i class="fa-solid fa-filter mr-1 text-brand-cyan"></i> Filtros ativos: ${fInfo.join(' | ')}` : 'Filtros: Todos aplicados';
@@ -730,7 +812,7 @@
         }
 
         // ==========================================
-        // 5. TABELAS DE DADOS
+        // 4. TABELAS (ORDENAÇÃO EXCLUSIVA E NOVA COLUNA)
         // ==========================================
         function setupSorting(headersSelector, targetType, renderFn) {
             document.querySelectorAll(headersSelector).forEach(th => {
@@ -738,13 +820,30 @@
                 newTh.addEventListener('click', () => {
                     const column = newTh.dataset.sort;
                     let currentSort = targetType === 'status' ? state.sortStatus : state.sortMatriz;
-                    if (currentSort.column === column) {
+                    
+                    if (currentSort.column !== column) {
+                        currentSort.column = column; currentSort.direction = 'desc';
+                    } else {
                         if (currentSort.direction === 'desc') currentSort.direction = 'asc';
                         else if (currentSort.direction === 'asc') currentSort.direction = 'none';
                         else currentSort.direction = 'desc';
-                    } else { currentSort.column = column; currentSort.direction = 'desc'; }
+                    }
                     renderFn(); 
                 });
+            });
+        }
+
+        function applyTableIcons(headersSelector, targetType) {
+            const currentSort = targetType === 'status' ? state.sortStatus : state.sortMatriz;
+            document.querySelectorAll(headersSelector).forEach(th => {
+                const icon = th.querySelector('i');
+                th.classList.remove('sort-active');
+                icon.className = 'fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors';
+                
+                if (th.dataset.sort === currentSort.column && currentSort.direction !== 'none') {
+                    th.classList.add('sort-active');
+                    icon.className = `fa-solid fa-sort-${currentSort.direction === 'asc' ? 'up' : 'down'} ml-1 text-brand-cyan transition-colors`;
+                }
             });
         }
 
@@ -752,7 +851,7 @@
             const grouped = {}; let indexTracker = 0;
             state.filteredData.forEach(d => {
                 const key = `${d.conta}|${d.descricao}|${d.filial}`;
-                if (!grouped[key]) grouped[key] = { originalIndex: indexTracker++, conta: d.conta, descricao: d.descricao, filial: d.filial, orcamento: 0, realizado: 0 };
+                if (!grouped[key]) grouped[key] = { originalIndex: indexTracker++, conta: d.conta, descricao: d.descricao, cd: d.cd, filial: d.filial, orcamento: 0, realizado: 0 };
                 grouped[key].orcamento += d.orcamento; grouped[key].realizado += d.realizado;
             });
 
@@ -780,6 +879,7 @@
                     <tr class="hover:bg-dark-hover transition-colors border-b border-dark-border">
                         <td class="px-4 py-3 font-medium text-gray-400 bg-[#0B1120]">${row.conta}</td>
                         <td class="px-4 py-3 font-medium text-white">${row.descricao}</td>
+                        <td class="px-4 py-3 text-brand-purple">${row.cd}</td>
                         <td class="px-4 py-3 text-brand-cyan">${row.filial}</td>
                         <td class="px-4 py-3 text-right">${formatBR(row.orcamento)}</td>
                         <td class="px-4 py-3 text-right text-white font-medium">${formatBR(row.realizado)}</td>
@@ -789,14 +889,9 @@
                 `);
             });
 
-            document.querySelectorAll('th[data-target="status"]').forEach(th => {
-                const icon = th.querySelector('i');
-                if (th.dataset.sort === state.sortStatus.column && state.sortStatus.direction !== 'none') {
-                    icon.className = `fa-solid fa-sort-${state.sortStatus.direction === 'asc' ? 'up' : 'down'} ml-1 text-brand-cyan`;
-                    th.classList.add('text-white');
-                } else { icon.className = 'fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan'; th.classList.remove('text-white'); }
-            });
+            applyTableIcons('th[data-target="status"]', 'status');
             setupSorting('th[data-target="status"]', 'status', renderTableStatus);
+            document.getElementById('table-footer-info').textContent = `${tableData.length} registros`;
         }
 
         window.toggleMatrixRow = function(descSafeId) {
@@ -816,18 +911,22 @@
 
             state.filteredData.forEach(d => {
                 if (!grouped[d.descricao]) {
-                    grouped[d.descricao] = { originalIndex: indexTracker++, conta: d.conta, descricao: d.descricao, totalOrcado: 0, totalRealizado: 0, filiais: {} };
+                    grouped[d.descricao] = { originalIndex: indexTracker++, conta: d.conta, descricao: d.descricao, totalOrcado: 0, totalRealizado: 0, saldo: 0, filiais: {} };
                     mesesParaMostrar.forEach(m => grouped[d.descricao][m] = 0);
                 }
                 if(mesesParaMostrar.includes(d.mesStr)) grouped[d.descricao][d.mesStr] += d.realizado;
-                grouped[d.descricao].totalOrcado += d.orcamento; grouped[d.descricao].totalRealizado += d.realizado;
+                grouped[d.descricao].totalOrcado += d.orcamento; 
+                grouped[d.descricao].totalRealizado += d.realizado;
+                grouped[d.descricao].saldo = grouped[d.descricao].totalOrcado - grouped[d.descricao].totalRealizado;
 
                 if (!grouped[d.descricao].filiais[d.filial]) {
-                    grouped[d.descricao].filiais[d.filial] = { filial: d.filial, totalOrcado: 0, totalRealizado: 0 };
+                    grouped[d.descricao].filiais[d.filial] = { filial: d.filial, totalOrcado: 0, totalRealizado: 0, saldo: 0 };
                     mesesParaMostrar.forEach(m => grouped[d.descricao].filiais[d.filial][m] = 0);
                 }
                 if(mesesParaMostrar.includes(d.mesStr)) grouped[d.descricao].filiais[d.filial][d.mesStr] += d.realizado;
-                grouped[d.descricao].filiais[d.filial].totalOrcado += d.orcamento; grouped[d.descricao].filiais[d.filial].totalRealizado += d.realizado;
+                grouped[d.descricao].filiais[d.filial].totalOrcado += d.orcamento; 
+                grouped[d.descricao].filiais[d.filial].totalRealizado += d.realizado;
+                grouped[d.descricao].filiais[d.filial].saldo = grouped[d.descricao].filiais[d.filial].totalOrcado - grouped[d.descricao].filiais[d.filial].totalRealizado;
             });
 
             let tableData = Object.values(grouped);
@@ -844,12 +943,13 @@
 
             let thHtml = `
                 <tr>
-                    <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="conta" data-target="matriz">Conta <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
-                    <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="descricao" data-target="matriz">Descrição <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
-                    <th class="px-4 py-3 text-right bg-[#0d1326] sortable group" data-sort="totalOrcado" data-target="matriz">Total Orçado <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
-                    <th class="px-4 py-3 text-right bg-[#0d1326] border-r border-dark-border sortable group" data-sort="totalRealizado" data-target="matriz">Total Realizado <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                    <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="conta" data-target="matriz">Conta <i class="fa-solid fa-sort ml-1 text-gray-600 transition-colors"></i></th>
+                    <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="descricao" data-target="matriz">Descrição <i class="fa-solid fa-sort ml-1 text-gray-600 transition-colors"></i></th>
+                    <th class="px-4 py-3 text-right bg-[#0d1326] sortable group" data-sort="totalOrcado" data-target="matriz">Total Orçado <i class="fa-solid fa-sort ml-1 text-gray-600 transition-colors"></i></th>
+                    <th class="px-4 py-3 text-right bg-[#0d1326] sortable group" data-sort="totalRealizado" data-target="matriz">Total Realizado <i class="fa-solid fa-sort ml-1 text-gray-600 transition-colors"></i></th>
+                    <th class="px-4 py-3 text-right bg-[#0d1326] border-r border-dark-border sortable group" data-sort="saldo" data-target="matriz">Diferença <i class="fa-solid fa-sort ml-1 text-gray-600 transition-colors"></i></th>
             `;
-            mesesParaMostrar.forEach(m => thHtml += `<th class="px-4 py-3 text-right sortable text-gray-500 group bg-[#0B1120]" data-sort="${m}" data-target="matriz">${m} <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>`);
+            mesesParaMostrar.forEach(m => thHtml += `<th class="px-4 py-3 text-right sortable text-gray-500 group bg-[#0B1120]" data-sort="${m}" data-target="matriz">${m} <i class="fa-solid fa-sort ml-1 text-gray-600 transition-colors"></i></th>`);
             thHtml += `</tr>`;
             document.getElementById('thead-matriz').innerHTML = thHtml;
 
@@ -862,7 +962,8 @@
                         <td class="px-4 py-3 font-medium text-gray-400 whitespace-nowrap bg-[#0B1120]"><i id="icon-${descSafeId}" class="fa-solid fa-chevron-right text-brand-cyan mr-2 text-[10px] expand-icon ${isExpanded ? 'expanded' : ''}"></i>${row.conta}</td>
                         <td class="px-4 py-3 font-bold text-white whitespace-nowrap">${row.descricao}</td>
                         <td class="px-4 py-3 text-right text-gray-400 bg-[#0d1326]">${formatBR(row.totalOrcado)}</td>
-                        <td class="px-4 py-3 text-right font-bold text-brand-cyan bg-[#0d1326] border-r border-dark-border">${formatBR(row.totalRealizado)}</td>
+                        <td class="px-4 py-3 text-right font-bold text-brand-cyan bg-[#0d1326]">${formatBR(row.totalRealizado)}</td>
+                        <td class="px-4 py-3 text-right font-medium border-r border-dark-border ${row.saldo < 0 ? 'text-red-400' : 'text-emerald-400'} bg-[#0d1326]">${formatBR(row.saldo)}</td>
                 `;
                 mesesParaMostrar.forEach(m => trHtml += `<td class="px-4 py-3 text-right font-medium text-gray-300">${formatBR(row[m])}</td>`);
                 trHtml += `</tr>`;
@@ -875,7 +976,8 @@
                             <td class="px-4 py-2 bg-[#0B1120]"><div class="w-full h-full border-r border-dark-border/50 border-dashed"></div></td>
                             <td class="px-4 py-2 font-medium text-gray-400 text-[13px] pl-6 flex items-center gap-2"><i class="fa-solid fa-turn-up fa-rotate-90 text-gray-600"></i> ${filialRow.filial}</td>
                             <td class="px-4 py-2 text-right text-gray-500 text-[13px] bg-[#0d1326]/50">${formatBR(filialRow.totalOrcado)}</td>
-                            <td class="px-4 py-2 text-right font-medium text-blue-400 text-[13px] bg-[#0d1326]/50 border-r border-dark-border">${formatBR(filialRow.totalRealizado)}</td>
+                            <td class="px-4 py-2 text-right font-medium text-blue-400 text-[13px] bg-[#0d1326]/50">${formatBR(filialRow.totalRealizado)}</td>
+                            <td class="px-4 py-2 text-right font-medium ${filialRow.saldo < 0 ? 'text-red-400/80' : 'text-emerald-400/80'} text-[13px] border-r border-dark-border bg-[#0d1326]/50">${formatBR(filialRow.saldo)}</td>
                     `;
                     mesesParaMostrar.forEach(m => {
                         const val = filialRow[m];
@@ -886,22 +988,40 @@
                 tbody.insertAdjacentHTML('beforeend', trHtml);
             });
 
-            document.querySelectorAll('th[data-target="matriz"]').forEach(th => {
-                const icon = th.querySelector('i');
-                if (th.dataset.sort === state.sortMatriz.column && state.sortMatriz.direction !== 'none') {
-                    icon.className = `fa-solid fa-sort-${state.sortMatriz.direction === 'asc' ? 'up' : 'down'} ml-1 text-brand-cyan`;
-                    th.classList.add('text-white');
-                } else { icon.className = 'fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan'; th.classList.remove('text-white'); }
-            });
+            applyTableIcons('th[data-target="matriz"]', 'matriz');
             setupSorting('th[data-target="matriz"]', 'matriz', renderTableMatriz);
         }
 
         // ==========================================
-        // 6. GRÁFICOS
+        // 6. GRÁFICOS E LEGENDA HTML CUSTOMIZADA
         // ==========================================
         Chart.defaults.color = '#94a3b8';
         function updateCharts() {
-            // Filiais
+
+            // === Gráfico CDs ===
+            const cdGroup = {};
+            state.filteredData.forEach(d => {
+                if(!cdGroup[d.cd]) cdGroup[d.cd] = { orcado: 0, realizado: 0 };
+                cdGroup[d.cd].orcado += d.orcamento; cdGroup[d.cd].realizado += d.realizado;
+            });
+            const cdLabels = Object.keys(cdGroup).sort();
+            const cdOrcado = cdLabels.map(f => cdGroup[f].orcado);
+            const cdRealizado = cdLabels.map(f => cdGroup[f].realizado);
+
+            if(state.charts.cd) state.charts.cd.destroy();
+            state.charts.cd = new Chart(document.getElementById('chartCD').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: cdLabels,
+                    datasets: [
+                        { label: 'Orçamento Previsto', data: cdOrcado, backgroundColor: 'rgba(139, 92, 246, 0.4)', borderColor: '#8b5cf6', borderWidth: 1, borderRadius: 2, datalabels: { color: '#c4b5fd', align: 'end', anchor: 'end', formatter: formatKMBT, font: {size: 10, weight: '500'} } },
+                        { label: 'Realizado', data: cdRealizado, backgroundColor: '#a855f7', borderRadius: 2, datalabels: { color: '#e9d5ff', align: 'end', anchor: 'end', formatter: formatKMBT, font: {size: 10, weight: 'bold'} } }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } }, plugins: { legend: { labels: { color: '#cbd5e1' } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatBR(ctx.raw)}` } } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { callback: v => formatKMBT(v) } }, x: { grid: { display: false } } }, animation: { duration: 600 } }
+            });
+
+            // === Gráfico Filiais (FULL WIDTH) ===
             const filialGroup = {};
             state.filteredData.forEach(d => {
                 if(!filialGroup[d.filial]) filialGroup[d.filial] = { orcado: 0, realizado: 0 };
@@ -924,62 +1044,116 @@
                 options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } }, plugins: { legend: { labels: { color: '#cbd5e1' } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatBR(ctx.raw)}` } } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { callback: v => formatKMBT(v) } }, x: { grid: { display: false } } }, animation: { duration: 600 } }
             });
 
-            // Composição (Filtra apenas Clicando na Legenda)
+            // === NOVO: Gráfico Descrições ===
+            const descGroup = {};
+            state.filteredData.forEach(d => {
+                if(!descGroup[d.descricao]) descGroup[d.descricao] = { orcado: 0, realizado: 0 };
+                descGroup[d.descricao].orcado += d.orcamento; descGroup[d.descricao].realizado += d.realizado;
+            });
+            const descLabels = Object.keys(descGroup).sort((a,b) => descGroup[b].realizado - descGroup[a].realizado); // Ordem decrescente
+            const descOrcado = descLabels.map(f => descGroup[f].orcado);
+            const descRealizado = descLabels.map(f => descGroup[f].realizado);
+
+            if(state.charts.descricoes) state.charts.descricoes.destroy();
+            state.charts.descricoes = new Chart(document.getElementById('chartDescricoes').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: descLabels,
+                    datasets: [
+                        { label: 'Orçamento', data: descOrcado, backgroundColor: 'rgba(245, 158, 11, 0.4)', borderColor: '#f59e0b', borderWidth: 1, borderRadius: 2, datalabels: { color: '#fcd34d', align: 'end', anchor: 'end', formatter: formatKMBT, font: {size: 9} } },
+                        { label: 'Realizado', data: descRealizado, backgroundColor: '#f59e0b', borderRadius: 2, datalabels: { color: '#fef3c7', align: 'end', anchor: 'end', formatter: formatKMBT, font: {size: 9, weight: 'bold'} } }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } }, plugins: { legend: { labels: { color: '#cbd5e1' } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatBR(ctx.raw)}` } } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { callback: v => formatKMBT(v) } }, x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45 } } }, animation: { duration: 600 } }
+            });
+
+            // === Gráfico Pizza (LEGENDA CUSTOM HTML) ===
             let pizzaData = state.data.filter(d => {
                 const mMatch = state.filters.month.length === 0 || state.filters.month.includes(d.mesStr);
                 const bMatch = state.filters.branch.length === 0 || state.filters.branch.includes(d.filial);
-                return mMatch && bMatch;
+                const cMatch = state.filters.cd.length === 0 || state.filters.cd.includes(d.cd);
+                return mMatch && bMatch && cMatch;
             });
             const compGroup = {};
             pizzaData.forEach(d => { compGroup[d.descricao] = (compGroup[d.descricao] || 0) + d.realizado; });
-            
             let allComp = Object.entries(compGroup).sort((a,b) => b[1] - a[1]).filter(item => item[1] > 0);
 
-            const bgColors = allComp.map((item, i) => {
-                const baseColor = extendedPalette[i % extendedPalette.length];
-                if (state.filters.category.length > 0) {
-                    if (state.filters.category.includes(item[0])) return baseColor;
-                    return 'rgba(51, 65, 85, 0.4)'; 
-                }
-                return baseColor; 
-            });
-
+            const bgColors = allComp.map((item, i) => extendedPalette[i % extendedPalette.length]);
+            
+            // Destaca no grafico se estiver filtrado
+            const borderColors = allComp.map(item => state.filters.category.includes(item[0]) ? '#ffffff' : '#111827');
+            const borderWidths = allComp.map(item => state.filters.category.includes(item[0]) ? 3 : 2);
+            
             if(state.charts.composicao) state.charts.composicao.destroy();
             state.charts.composicao = new Chart(document.getElementById('chartComposicao').getContext('2d'), {
                 type: 'doughnut',
-                data: { labels: allComp.map(i => i[0]), datasets: [{ data: allComp.map(i => i[1]), backgroundColor: bgColors, borderWidth: 2, borderColor: '#111827', hoverOffset: 0, datalabels: { display: false } }] },
+                data: { labels: allComp.map(i => i[0]), datasets: [{ data: allComp.map(i => i[1]), backgroundColor: bgColors, borderWidth: borderWidths, borderColor: borderColors, hoverOffset: 10, datalabels: { display: false } }] },
                 options: { 
                     responsive: true, maintainAspectRatio: false, cutout: '65%',
-                    events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
                     plugins: { 
-                        legend: { 
-                            position: 'right', align: 'start', labels: { boxWidth: 10, font: {size: 10}, color: '#cbd5e1', usePointStyle: true, pointStyle: 'circle' },
-                            onClick: function(e, legendItem, legend) {
-                                const label = legendItem.text;
-                                const isCtrl = e.native.ctrlKey || e.native.metaKey;
-
-                                if (isCtrl) {
-                                    if (state.filters.category.includes(label)) state.filters.category = state.filters.category.filter(c => c !== label);
-                                    else state.filters.category.push(label);
-                                } else {
-                                    if (state.filters.category.length === 1 && state.filters.category[0] === label) state.filters.category = []; 
-                                    else state.filters.category = [label];
-                                }
-
-                                if(state.filters.category.length > 0) {
-                                    document.getElementById('category-filter-badge').classList.remove('hidden');
-                                    document.getElementById('category-filter-badge').innerHTML = `<i class="fa-solid fa-chart-pie mr-1"></i> ${state.filters.category.length} Subgrupo(s)`;
-                                } else document.getElementById('category-filter-badge').classList.add('hidden');
-                                updateApp();
-                            }
-                        }, 
+                        legend: { display: false }, // Oculta a padrao
                         tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 10, callbacks: { label: (ctx) => ` ${formatBR(ctx.raw)}` } } 
                     },
-                    onClick: (e) => { e.native.stopPropagation(); } 
+                    // Impede de interagir direto com a barra caso queira focar na legenda, mas deixamos ativo pra animacao via JS
                 }
             });
 
-            // Evolução
+            // Constrói a legenda HTML separada
+            const legendBox = document.getElementById('custom-legend-box');
+            legendBox.innerHTML = '';
+            
+            allComp.forEach((item, index) => {
+                const label = item[0];
+                const color = bgColors[index];
+                const isSelected = state.filters.category.includes(label);
+                
+                // Se existe algum filtro ativo e este nao for ele, fica opaco
+                const opacityClass = (state.filters.category.length > 0 && !isSelected) ? 'opacity-40' : 'opacity-100';
+                
+                const div = document.createElement('div');
+                div.className = `legend-item flex items-center justify-between p-1.5 rounded cursor-pointer ${opacityClass}`;
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden w-3/4">
+                        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${color}; border: ${isSelected ? '2px solid white' : 'none'}"></span>
+                        <span class="text-[11px] text-gray-300 font-medium truncate" title="${label}">${label}</span>
+                    </div>
+                    <span class="text-[11px] font-bold text-gray-400 w-1/4 text-right">${formatKMBT(item[1])}</span>
+                `;
+
+                // INTERATIVIDADE DA LEGENDA (FILTRO E ANIMAÇÃO)
+                div.onclick = (e) => {
+                    const isCtrl = e.ctrlKey || e.metaKey;
+                    if (isCtrl) {
+                        if (state.filters.category.includes(label)) state.filters.category = state.filters.category.filter(c => c !== label);
+                        else state.filters.category.push(label);
+                    } else {
+                        if (state.filters.category.length === 1 && state.filters.category[0] === label) state.filters.category = []; 
+                        else state.filters.category = [label];
+                    }
+                    if(state.filters.category.length > 0) {
+                        document.getElementById('category-filter-badge').classList.remove('hidden');
+                        document.getElementById('category-filter-badge').innerHTML = `<i class="fa-solid fa-chart-pie mr-1"></i> ${state.filters.category.length} Subgrupo(s)`;
+                    } else document.getElementById('category-filter-badge').classList.add('hidden');
+                    updateApp();
+                };
+
+                // ANIMAÇÃO DE HOVER NO GRÁFICO (Destaque da fatia)
+                div.onmouseenter = () => {
+                    if(!state.charts.composicao) return;
+                    state.charts.composicao.setActiveElements([{datasetIndex: 0, index: index}]);
+                    state.charts.composicao.update();
+                };
+                div.onmouseleave = () => {
+                    if(!state.charts.composicao) return;
+                    state.charts.composicao.setActiveElements([]);
+                    state.charts.composicao.update();
+                };
+
+                legendBox.appendChild(div);
+            });
+
+            // === Gráfico Evolução ===
             const evolGroup = {};
             state.filteredData.forEach(d => {
                 if(!evolGroup[d.mesNum]) evolGroup[d.mesNum] = { mes: d.mesStr, orcado: 0, realizado: 0 };
