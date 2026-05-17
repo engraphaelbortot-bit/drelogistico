@@ -119,11 +119,11 @@
             <form id="login-form" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-400 mb-1"><i class="fa-solid fa-user mr-1 text-brand-cyan"></i> Usuário</label>
-                    <input type="text" id="login-user" class="w-full bg-[#0B1120] border border-dark-border text-white rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-transparent block p-2.5 outline-none transition-all" placeholder="Digite o usuário (logística)">
+                    <input type="text" id="login-user" class="w-full bg-[#0B1120] border border-dark-border text-white rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-transparent block p-2.5 outline-none transition-all" placeholder="Digite o usuário">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-400 mb-1"><i class="fa-solid fa-lock mr-1 text-brand-cyan"></i> Senha</label>
-                    <input type="password" id="login-pass" class="w-full bg-[#0B1120] border border-dark-border text-white rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-transparent block p-2.5 outline-none transition-all" placeholder="•••••••• (log123)">
+                    <input type="password" id="login-pass" class="w-full bg-[#0B1120] border border-dark-border text-white rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-transparent block p-2.5 outline-none transition-all" placeholder="••••••••">
                 </div>
                 <div id="login-error" class="text-red-400 text-sm hidden font-medium text-center py-2 bg-red-500/10 rounded border border-red-500/20">
                     <i class="fa-solid fa-circle-exclamation mr-1"></i> Credenciais inválidas.
@@ -267,7 +267,7 @@
                 </div>
                 <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full" id="kpi-saldo-border"></div>
-                    <p class="text-sm font-medium text-gray-400 mb-1">Diferença (Real vs Orçado)</p>
+                    <p class="text-sm font-medium text-gray-400 mb-1">Diferença (Orçado - Realizado)</p>
                     <h2 class="text-3xl font-bold" id="kpi-saldo">R$ 0,00</h2>
                     <div class="mt-2 inline-flex" id="kpi-saldo-badge"></div>
                 </div>
@@ -289,7 +289,7 @@
                 <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-layer-group text-brand-purple"></i> Comparativo por Centro de Distribuição (CD)
+                            <i class="fa-solid fa-layer-group text-brand-purple"></i> Orçamento vs Realizado por Centro de Distribuição (CD)
                         </h3>
                     </div>
                     <div class="chart-container flex-grow" style="height: 380px;"><canvas id="chartCD"></canvas></div>
@@ -312,7 +312,7 @@
                         <!-- Legenda Custom HTML Vertical -->
                         <div class="w-full lg:w-7/12 h-[350px] flex flex-col">
                             <div class="text-[11px] text-gray-500 mb-2 italic bg-[#0f172a] p-2 rounded border border-dark-border shadow-inner leading-relaxed">
-                                <i class="fa-solid fa-hand-pointer text-brand-cyan"></i> <strong>Passe o rato e Clique</strong> no nome na lista abaixo para filtrar.<br>
+                                <i class="fa-solid fa-hand-pointer text-brand-cyan"></i> <strong>Passe o rato e Clique</strong> no nome da lista abaixo para filtrar.<br>
                                 <i class="fa-solid fa-keyboard text-brand-purple"></i> <kbd class="bg-gray-800 px-1 rounded text-[10px]">Ctrl</kbd> + Clique para múltipla seleção.
                             </div>
                             <div id="custom-legend-box" class="flex-grow overflow-y-auto custom-scroll flex flex-col gap-1 pr-2 pb-2">
@@ -327,7 +327,7 @@
             <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-map-location-dot text-brand-cyan"></i> Orçamento vs Realizado por Filial
+                        <i class="fa-solid fa-map-location-dot text-brand-cyan"></i> Orçamento vs Realizado por Filial (Detalhado)
                     </h3>
                 </div>
                 <div class="chart-container flex-grow" style="height: 350px;"><canvas id="chartFilial"></canvas></div>
@@ -446,21 +446,33 @@
         const mesesNomesGlobais = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
         const extendedPalette = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#f43f5e', '#84cc16', '#14b8a6', '#6366f1', '#d946ef', '#f97316', '#eab308', '#22c55e', '#0ea5e9', '#a855f7', '#fb7185', '#bef264', '#2dd4bf', '#818cf8', '#e879f9', '#fb923c'];
 
-        // MAPEAMENTO EXATO DOS CDs CONFORME A BASE FORNECIDA E SOLICITADA
-        // Qualquer nova filial não mapeada não ganhará cidade inventada, ficará com o nome original
+        // MAPEAMENTO EXATO DOS 8 CDs (Agrupa as 13 Filiais listadas exatamente)
         const CD_MAPPING = {
-            'API': 'Pinhais/PR',
             'TPH': 'Pinhais/PR',
-            'MCD': 'São José/SC',
-            'TSJ': 'São José/SC',
-            'CTD': 'Curitiba/PR',
-            'ABC': 'Matriz/SP'
+            'API': 'Pinhais/PR',
+            
+            'TPA': 'Esteio/RS',
+            'TBA': 'Esteio/RS',
+            'TBE': 'Esteio/RS',
+            
+            'TCG': 'Campo Grande/MS',
+            'MCD': 'Campo Grande/MS',
+            
+            'TCV': 'Cascavel/PR',
+            'ABC': 'Cascavel/PR',
+            
+            'TBL': 'Londrina/PR',
+            
+            'TCA': 'Cuiabá/MT',
+            
+            'TSJ': 'São José dos Campos/SP',
+            
+            'CTD': 'Campinas/SP'
         };
 
         function getCD(filialName) {
             const f = String(filialName).trim().toUpperCase();
-            // Retorna o nome da cidade mapeada, se não existir retorna a propria sigla da filial
-            return CD_MAPPING[f] || f; 
+            return CD_MAPPING[f] || `Outros (${f})`; 
         }
 
         let state = {
@@ -628,7 +640,6 @@
                 let realizadoVal = cleanRow['REALIZADO'] !== undefined && typeof cleanRow['REALIZADO'] === 'number' ? cleanRow['REALIZADO'] : parseFinanceValue(cleanRow['REALIZADO']);
                 const filialVal = cleanRow['FILIAL'] ? String(cleanRow['FILIAL']).trim() : 'S/ Filial';
                 
-                // Mapeamento dinâmico e inteligente do CD conforme regra
                 const cdVal = getCD(filialVal);
 
                 processed.push({
@@ -847,7 +858,7 @@
             });
 
             let tableData = Object.values(grouped).map(row => {
-                row.saldo = row.orcamento - row.realizado; // Diferença / Saldo
+                row.saldo = row.orcamento - row.realizado; 
                 row.variacaoNum = row.orcamento > 0 ? ((row.realizado - row.orcamento) / row.orcamento) * 100 : (row.realizado > 0 ? Infinity : 0);
                 return row;
             });
@@ -911,7 +922,7 @@
                 grouped[d.descricao].saldo = grouped[d.descricao].totalOrcado - grouped[d.descricao].totalRealizado;
 
                 if (!grouped[d.descricao].filiais[d.filial]) {
-                    grouped[d.descricao].filiais[d.filial] = { filial: d.filial, cd: d.cd, totalOrcado: 0, totalRealizado: 0, saldo: 0 };
+                    grouped[d.descricao].filiais[d.filial] = { filial: d.filial, totalOrcado: 0, totalRealizado: 0, saldo: 0 };
                     mesesParaMostrar.forEach(m => grouped[d.descricao].filiais[d.filial][m] = 0);
                 }
                 if(mesesParaMostrar.includes(d.mesStr)) grouped[d.descricao].filiais[d.filial][d.mesStr] += d.realizado;
@@ -965,7 +976,7 @@
                     trHtml += `
                         <tr class="${isExpanded ? '' : 'hidden'} child-of-${descSafeId} bg-[#060a14] transition-opacity duration-300 ${borderClass}">
                             <td class="px-4 py-2 bg-[#0B1120]"><div class="w-full h-full border-r border-dark-border/50 border-dashed"></div></td>
-                            <td class="px-4 py-2 font-medium text-gray-400 text-[13px] pl-6 flex items-center gap-2" title="${filialRow.cd}"><i class="fa-solid fa-turn-up fa-rotate-90 text-gray-600"></i> ${filialRow.filial} <span class="text-[9px] text-gray-600 ml-1">(${filialRow.cd})</span></td>
+                            <td class="px-4 py-2 font-medium text-gray-400 text-[13px] pl-6 flex items-center gap-2"><i class="fa-solid fa-turn-up fa-rotate-90 text-gray-600"></i> ${filialRow.filial}</td>
                             <td class="px-4 py-2 text-right text-gray-500 text-[13px] bg-[#0d1326]/50">${formatBR(filialRow.totalOrcado)}</td>
                             <td class="px-4 py-2 text-right font-medium text-blue-400 text-[13px] bg-[#0d1326]/50">${formatBR(filialRow.totalRealizado)}</td>
                             <td class="px-4 py-2 text-right font-medium ${filialRow.saldo < 0 ? 'text-red-400/80' : 'text-emerald-400/80'} text-[13px] border-r border-dark-border bg-[#0d1326]/50">${formatBR(filialRow.saldo)}</td>
@@ -984,18 +995,19 @@
         }
 
         // ==========================================
-        // 6. GRÁFICOS
+        // 6. GRÁFICOS (ORDENADOS POR REALIZADO)
         // ==========================================
         Chart.defaults.color = '#94a3b8';
         function updateCharts() {
 
-            // === Gráfico CDs ===
+            // === Gráfico CDs (ORDENADO PELO MAIOR REALIZADO) ===
             const cdGroup = {};
             state.filteredData.forEach(d => {
                 if(!cdGroup[d.cd]) cdGroup[d.cd] = { orcado: 0, realizado: 0 };
                 cdGroup[d.cd].orcado += d.orcamento; cdGroup[d.cd].realizado += d.realizado;
             });
-            const cdLabels = Object.keys(cdGroup).sort();
+            // Ordena CDs do maior custo realizado para o menor
+            const cdLabels = Object.keys(cdGroup).sort((a,b) => cdGroup[b].realizado - cdGroup[a].realizado);
             const cdOrcado = cdLabels.map(f => cdGroup[f].orcado);
             const cdRealizado = cdLabels.map(f => cdGroup[f].realizado);
 
@@ -1012,13 +1024,14 @@
                 options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } }, plugins: { legend: { labels: { color: '#cbd5e1' } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatBR(ctx.raw)}` } } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { callback: v => formatKMBT(v) } }, x: { grid: { display: false } } }, animation: { duration: 600 } }
             });
 
-            // === Gráfico Filiais (FULL WIDTH) ===
+            // === Gráfico Filiais (ORDENADO PELO MAIOR REALIZADO) ===
             const filialGroup = {};
             state.filteredData.forEach(d => {
                 if(!filialGroup[d.filial]) filialGroup[d.filial] = { orcado: 0, realizado: 0 };
                 filialGroup[d.filial].orcado += d.orcamento; filialGroup[d.filial].realizado += d.realizado;
             });
-            const filiaisLabels = Object.keys(filialGroup).sort();
+            // Ordena filiais do maior custo realizado para o menor
+            const filiaisLabels = Object.keys(filialGroup).sort((a,b) => filialGroup[b].realizado - filialGroup[a].realizado);
             const dataOrcado = filiaisLabels.map(f => filialGroup[f].orcado);
             const dataRealizado = filiaisLabels.map(f => filialGroup[f].realizado);
 
@@ -1035,7 +1048,7 @@
                 options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } }, plugins: { legend: { labels: { color: '#cbd5e1' } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatBR(ctx.raw)}` } } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { callback: v => formatKMBT(v) } }, x: { grid: { display: false } } }, animation: { duration: 600 } }
             });
 
-            // === NOVO Gráfico Descrições (FULL WIDTH) ===
+            // === NOVO Gráfico Descrições (ORDENADO PELO MAIOR REALIZADO) ===
             const descGroup = {};
             state.filteredData.forEach(d => {
                 if(!descGroup[d.descricao]) descGroup[d.descricao] = { orcado: 0, realizado: 0 };
@@ -1058,7 +1071,7 @@
                 options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } }, plugins: { legend: { labels: { color: '#cbd5e1' } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatBR(ctx.raw)}` } } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { callback: v => formatKMBT(v) } }, x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45 } } }, animation: { duration: 600 } }
             });
 
-            // === Gráfico Pizza (LEGENDA CUSTOM VERTICAL E ANIMADA) ===
+            // === Gráfico Pizza (LEGENDA CUSTOM HTML) ===
             let pizzaData = state.data.filter(d => {
                 const mMatch = state.filters.month.length === 0 || state.filters.month.includes(d.mesStr);
                 const bMatch = state.filters.branch.length === 0 || state.filters.branch.includes(d.filial);
