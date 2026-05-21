@@ -12,11 +12,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 
-    <!-- SheetJS (Leitura EXCEL) e PapaParse (Leitura CSV) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- PapaParse (Para leitura do CSV Excel) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
-    <!-- Font Awesome -->
+    <!-- Font Awesome (Ícones) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Configuração Tailwind -->
@@ -26,7 +25,7 @@
             theme: {
                 extend: {
                     colors: {
-                        dark: { bg: '#0B1120', card: '#111827', border: '#1F2937', hover: '#1e293b', menu: '#0f172a' },
+                        dark: { bg: '#0B1120', card: '#111827', border: '#1F2937', hover: '#1e293b' },
                         brand: { cyan: '#06b6d4', blue: '#3b82f6', purple: '#8b5cf6' }
                     }
                 }
@@ -36,6 +35,7 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
         body { font-family: 'Inter', sans-serif; background-color: #0B1120; color: #e2e8f0; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #111827; }
@@ -49,8 +49,8 @@
 
         .chart-container { position: relative; width: 100%; height: 320px; }
         
-        /* Modificação Visual da Ordenação (Exclusiva por Coluna) */
-        th.sortable { cursor: pointer; user-select: none; transition: all 0.2s ease; }
+        /* Ordenação e Tabelas */
+        th.sortable { cursor: pointer; user-select: none; transition: all 0.2s ease; position: sticky; top: 0; background-color: #0B1120; z-index: 10; }
         th.sortable:hover { background-color: rgba(6, 182, 212, 0.1); color: #06b6d4; }
         th.sort-active { color: #06b6d4 !important; background-color: rgba(6, 182, 212, 0.05); }
         
@@ -66,9 +66,17 @@
         /* Legenda Customizada Animada */
         .legend-item { transition: all 0.2s ease; }
         .legend-item:hover { background-color: rgba(30, 41, 59, 0.8); transform: translateX(6px); border-left: 3px solid #06b6d4; }
+
+        /* Scroll Box para Tabelas */
+        .table-scroll-container { max-height: 550px; overflow-y: auto; overflow-x: auto; }
+        
+        /* Estilo para Inputs de Projeção */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
     </style>
 
-    <!-- FIRESTORE DB MODULE -->
+    <!-- FIRESTORE DB MODULE (CHAVES INTEGRADAS) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -88,19 +96,11 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        window.db = db;
-        window.auth = auth;
-        window.collection = collection;
-        window.getDocs = getDocs;
-        window.doc = doc;
-        window.writeBatch = writeBatch;
-        window.appId = 'bi-logistico-db'; 
+        window.db = db; window.auth = auth; window.collection = collection; window.getDocs = getDocs; window.doc = doc; window.writeBatch = writeBatch;
+        window.appId = 'bi-logistico-db-pro'; 
 
         const initAuth = async () => { await signInAnonymously(auth); };
-        
-        initAuth().then(() => {
-            document.dispatchEvent(new Event('FirebaseReady'));
-        });
+        initAuth().then(() => { document.dispatchEvent(new Event('FirebaseReady')); });
     </script>
 </head>
 <body class="min-h-screen flex flex-col antialiased relative">
@@ -152,10 +152,9 @@
                 <!-- Filtros Globais -->
                 <div class="flex items-center bg-[#0B1120] p-1.5 rounded-lg border border-dark-border relative">
                     <div id="category-filter-badge" class="hidden absolute -top-3 left-2 bg-brand-purple text-white text-[10px] px-2 py-0.5 rounded-full shadow-md z-10 animate-pulse border border-purple-400/50">
-                        <i class="fa-solid fa-chart-pie mr-1"></i> Filtro de Subgrupo Ativo
+                        <i class="fa-solid fa-chart-pie mr-1"></i> Subgrupo Filtrado
                     </div>
                     
-                    <!-- Dropdown Meses -->
                     <div class="relative custom-dropdown" id="dropdown-container-month">
                         <button onclick="toggleDropdown('menu-month')" class="flex items-center justify-between w-32 bg-transparent text-sm text-gray-200 font-medium px-2 py-1 outline-none cursor-pointer hover:text-white border border-transparent hover:border-dark-border rounded">
                             <span id="label-month" class="truncate">Meses (Todos)</span>
@@ -171,10 +170,8 @@
                             <div id="list-month" class="max-h-48 overflow-y-auto custom-scroll px-2 space-y-1"></div>
                         </div>
                     </div>
-
                     <div class="w-px h-5 bg-dark-border mx-1"></div>
 
-                    <!-- Dropdown CD -->
                     <div class="relative custom-dropdown" id="dropdown-container-cd">
                         <button onclick="toggleDropdown('menu-cd')" class="flex items-center justify-between w-36 bg-transparent text-sm text-gray-200 font-medium px-2 py-1 outline-none cursor-pointer hover:text-white border border-transparent hover:border-dark-border rounded">
                             <span id="label-cd" class="truncate">CDs (Todos)</span>
@@ -190,10 +187,8 @@
                             <div id="list-cd" class="max-h-48 overflow-y-auto custom-scroll px-2 space-y-1"></div>
                         </div>
                     </div>
-
                     <div class="w-px h-5 bg-dark-border mx-1"></div>
                     
-                    <!-- Dropdown Filiais -->
                     <div class="relative custom-dropdown" id="dropdown-container-branch">
                         <button onclick="toggleDropdown('menu-branch')" class="flex items-center justify-between w-36 bg-transparent text-sm text-gray-200 font-medium px-2 py-1 outline-none cursor-pointer hover:text-white border border-transparent hover:border-dark-border rounded">
                             <span id="label-branch" class="truncate">Filial (Todas)</span>
@@ -210,16 +205,16 @@
                         </div>
                     </div>
 
-                    <button id="btn-reset" onclick="resetAllFilters()" class="bg-dark-border hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 text-gray-300 px-2 py-1 rounded text-sm transition-all border border-transparent ml-1" title="Limpar Todos os Filtros">
+                    <button id="btn-reset" onclick="resetAllFilters()" class="bg-dark-border hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 text-gray-300 px-2.5 py-1 rounded text-sm transition-all border border-transparent ml-1" title="Limpar Filtros">
                         <i class="fa-solid fa-filter-circle-xmark"></i>
                     </button>
                 </div>
 
-                <!-- Enviar Nova Base -->
                 <div class="flex items-center gap-2">
-                    <button onclick="document.getElementById('excel-upload').click()" class="bg-[#1e293b] hover:bg-brand-purple text-white border border-dark-border hover:border-brand-purple px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-md flex items-center gap-2 group">
-                        <i class="fa-solid fa-cloud-arrow-up text-brand-purple group-hover:text-white transition-colors"></i> Enviar Nova Base
+                    <button onclick="document.getElementById('excel-upload').click()" class="bg-[#1e293b] hover:bg-brand-cyan text-white border border-dark-border hover:border-brand-cyan px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-md flex items-center gap-2 group">
+                        <i class="fa-solid fa-upload text-brand-cyan group-hover:text-white transition-colors"></i> Enviar Nova Base
                     </button>
+                    <!-- Aceita EXCEL para processar as MÚLTIPLAS ABAS -->
                     <input type="file" id="excel-upload" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileUpload(event)">
                     
                     <button onclick="location.reload()" class="text-gray-500 hover:text-red-400 transition-colors ml-2" title="Sair do Sistema">
@@ -239,13 +234,12 @@
             <p class="text-sm text-gray-500 mt-2" id="sync-status">Aguardando login de segurança.</p>
         </div>
 
-        <!-- Alerta de Ausência de Dados -->
         <div id="empty-state-alert" class="hidden bg-brand-blue/10 border border-brand-blue/30 text-brand-blue p-4 rounded-xl items-center justify-between">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-circle-info text-2xl"></i>
                 <div>
                     <h3 class="font-bold text-white">Banco de Dados Vazio</h3>
-                    <p class="text-sm">O sistema conectou-se à nuvem com sucesso, mas não há dados. Clique em "Enviar Nova Base" no topo para importar as operações.</p>
+                    <p class="text-sm">O sistema conectou-se à nuvem com sucesso, mas não há dados. Clique em "Enviar Nova Base" no topo para importar a sua folha Excel completa (Orçamentos + Detalhes).</p>
                 </div>
             </div>
             <i class="fa-solid fa-arrow-up text-xl animate-bounce"></i>
@@ -253,153 +247,244 @@
 
         <!-- Conteúdo do Dashboard -->
         <div id="dashboard-content" class="hidden space-y-6">
-            <!-- KPIs -->
-            <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-gray-500"></div>
-                    <p class="text-sm font-medium text-gray-400 mb-1">Orçado Acumulado</p>
-                    <h2 class="text-3xl font-bold text-white" id="kpi-orcado">R$ 0,00</h2>
-                </div>
-                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-brand-cyan"></div>
-                    <p class="text-sm font-medium text-gray-400 mb-1">Realizado Acumulado</p>
-                    <h2 class="text-3xl font-bold text-white" id="kpi-realizado">R$ 0,00</h2>
-                </div>
-                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full" id="kpi-saldo-border"></div>
-                    <p class="text-sm font-medium text-gray-400 mb-1">Diferença (Orçado - Realizado)</p>
-                    <h2 class="text-3xl font-bold" id="kpi-saldo">R$ 0,00</h2>
-                    <div class="mt-2 inline-flex" id="kpi-saldo-badge"></div>
-                </div>
-                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden flex flex-col justify-center">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-brand-purple"></div>
-                    <p class="text-sm font-medium text-gray-400 mb-1">% de Execução Global</p>
-                    <div class="flex items-end gap-3">
-                        <h2 class="text-3xl font-bold text-white" id="kpi-execucao">0%</h2>
-                        <div class="w-full bg-gray-800 rounded-full h-2.5 mb-2">
-                            <div class="bg-brand-purple h-2.5 rounded-full transition-all duration-1000" id="kpi-bar" style="width: 0%"></div>
+            
+            <!-- Navegação Principal entre Dashboards -->
+            <div class="flex border-b border-dark-border gap-4 mb-2">
+                <button onclick="switchDashboard('view-custos')" id="btn-view-custos" class="pb-2 text-lg font-bold border-b-2 border-brand-cyan text-white transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-truck-fast text-brand-cyan"></i> Custos Logísticos
+                </button>
+                <button onclick="switchDashboard('view-reducao')" id="btn-view-reducao" class="pb-2 text-lg font-bold border-b-2 border-transparent text-gray-500 hover:text-white transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-bullseye text-amber-500"></i> Plano de Redução Anual
+                </button>
+            </div>
+
+            <!-- VIEW 1: CUSTOS LOGÍSTICOS -->
+            <div id="view-custos" class="space-y-6 block">
+                <!-- KPIs -->
+                <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-gray-500"></div>
+                        <p class="text-sm font-medium text-gray-400 mb-1">Orçado Acumulado</p>
+                        <h2 class="text-3xl font-bold text-white" id="kpi-orcado">R$ 0,00</h2>
+                    </div>
+                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-brand-cyan"></div>
+                        <p class="text-sm font-medium text-gray-400 mb-1">Realizado Acumulado</p>
+                        <h2 class="text-3xl font-bold text-white" id="kpi-realizado">R$ 0,00</h2>
+                    </div>
+                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full" id="kpi-saldo-border"></div>
+                        <p class="text-sm font-medium text-gray-400 mb-1">Diferença (Orçado - Realizado)</p>
+                        <h2 class="text-3xl font-bold" id="kpi-saldo">R$ 0,00</h2>
+                        <div class="mt-2 inline-flex" id="kpi-saldo-badge"></div>
+                    </div>
+                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card relative overflow-hidden flex flex-col justify-center">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-brand-purple"></div>
+                        <p class="text-sm font-medium text-gray-400 mb-1">% de Execução Global</p>
+                        <div class="flex items-end gap-3">
+                            <h2 class="text-3xl font-bold text-white" id="kpi-execucao">0%</h2>
+                            <div class="w-full bg-gray-800 rounded-full h-2.5 mb-2">
+                                <div class="bg-brand-purple h-2.5 rounded-full transition-all duration-1000" id="kpi-bar" style="width: 0%"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- ROW 1: Gráfico CD (Esq) + Gráfico Pizza (Dir) -->
-            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Gráfico CD -->
-                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
+                <!-- ROW 1: Gráfico CD (Esq) + Gráfico Pizza (Dir) -->
+                <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-layer-group text-brand-purple"></i> Comparativo Orçamento vs Realizado por CD
+                            </h3>
+                        </div>
+                        <div class="chart-container flex-grow" style="height: 350px;"><canvas id="chartCD"></canvas></div>
+                    </div>
+
+                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col relative group">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-brand-cyan"></i> Distribuição por Subgrupo
+                            </h3>
+                        </div>
+                        <div class="flex flex-col lg:flex-row h-[350px] gap-6 mt-2 items-center w-full">
+                            <div class="w-full lg:w-5/12 h-[250px] relative flex justify-center items-center">
+                                <canvas id="chartComposicao"></canvas>
+                            </div>
+                            <div class="w-full lg:w-7/12 h-[300px] flex flex-col">
+                                <div class="text-[11px] text-gray-500 mb-2 italic bg-[#0f172a] p-2 rounded border border-dark-border shadow-inner leading-relaxed">
+                                    <i class="fa-solid fa-hand-pointer text-brand-cyan"></i> <strong>Passe o rato e Clique</strong> nos nomes abaixo para filtrar.<br>
+                                    <i class="fa-solid fa-keyboard text-brand-purple"></i> <kbd class="bg-gray-800 px-1 rounded text-[10px]">Ctrl</kbd> + Clique para múltipla seleção.
+                                </div>
+                                <div id="custom-legend-box" class="flex-grow overflow-y-auto custom-scroll flex flex-col gap-1 pr-2 pb-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ROW 2: Gráfico Filial -->
+                <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-layer-group text-brand-purple"></i> Orçamento vs Realizado por Centro de Distribuição (CD)
+                            <i class="fa-solid fa-map-location-dot text-brand-cyan"></i> Orçamento vs Realizado por Filial (Detalhado)
                         </h3>
                     </div>
-                    <div class="chart-container flex-grow" style="height: 380px;"><canvas id="chartCD"></canvas></div>
-                </div>
+                    <div class="chart-container flex-grow" style="height: 350px;"><canvas id="chartFilial"></canvas></div>
+                </section>
 
-                <!-- Gráfico Pizza Animado -->
-                <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col relative group">
-                    <div class="flex justify-between items-center mb-2">
+                <!-- ROW 3: Gráfico Descrições -->
+                <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-chart-pie text-brand-cyan"></i> Distribuição por Subgrupo
+                            <i class="fa-solid fa-list-check text-amber-500"></i> Orçamento vs Realizado por Descrição (Contas)
                         </h3>
+                    </div>
+                    <div class="chart-container flex-grow" style="height: 350px;"><canvas id="chartDescricoes"></canvas></div>
+                </section>
+
+                <!-- ROW 4: Evolução Mensal -->
+                <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-brand-cyan"></i> Evolução Mensal Geral
+                        </h3>
+                    </div>
+                    <div class="chart-container" style="height: 300px;"><canvas id="chartEvolucao"></canvas></div>
+                </section>
+
+                <!-- Tables (Tabs) - SOMENTE NA TELA DE CUSTOS -->
+                <section class="bg-dark-card border border-dark-border rounded-xl glow-card flex flex-col overflow-hidden mt-6">
+                    <div class="flex border-b border-dark-border bg-[#0B1120] overflow-x-auto custom-scroll whitespace-nowrap">
+                        <button onclick="switchTab('tab-status')" id="btn-tab-status" class="tab-btn active px-6 py-4 text-sm font-semibold transition-colors flex items-center gap-2 border-r border-dark-border">
+                            <i class="fa-solid fa-temperature-half"></i> Resumo Orçamentário c/ Projeções
+                        </button>
+                        <button onclick="switchTab('tab-matriz')" id="btn-tab-matriz" class="tab-btn text-gray-400 hover:text-white px-6 py-4 text-sm font-semibold transition-colors flex items-center gap-2 border-r border-dark-border">
+                            <i class="fa-solid fa-calendar-days"></i> Matriz Mensal Detalhada
+                        </button>
+                        <button onclick="switchTab('tab-lancamentos')" id="btn-tab-lancamentos" class="tab-btn text-gray-400 hover:text-white px-6 py-4 text-sm font-semibold transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-list-ul"></i> Detalhe de Lançamentos (Dia a Dia)
+                        </button>
+                    </div>
+
+                    <!-- Tab: Status com Inputs de Projeção -->
+                    <div id="tab-status" class="tab-content block">
+                        <div class="text-xs text-brand-cyan bg-[#0B1120] py-2 px-4 border-b border-dark-border italic flex justify-between">
+                            <span><i class="fa-solid fa-lightbulb mr-1"></i> A Média/Mês divide o acumulado pelo nº de meses. Insira um "Novo Valor" para calcular a redução no ano.</span>
+                        </div>
+                        <div class="table-scroll-container custom-scroll pb-4">
+                            <table class="w-full text-left text-gray-300">
+                                <thead class="text-xs uppercase bg-[#0B1120] text-gray-400 sticky top-0 border-b border-dark-border z-10 shadow-md">
+                                    <tr>
+                                        <th class="px-3 py-2 sortable group w-24" data-sort="conta" data-target="status">Conta <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                                        <th class="px-3 py-2 sortable group" data-sort="descricao" data-target="status">Descrição <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                                        <!-- CD Column Narrowed -->
+                                        <th class="px-2 py-2 sortable group w-16 text-center" data-sort="cd" data-target="status">CD <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                                        <th class="px-3 py-2 sortable group w-20" data-sort="filial" data-target="status">Filial <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                                        <th class="px-3 py-2 text-right sortable group" data-sort="orcamento" data-target="status">Orçado <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                                        <th class="px-3 py-2 text-right sortable group" data-sort="realizado" data-target="status">Realizado <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                                        <th class="px-3 py-2 text-right sortable group" data-sort="saldo" data-target="status">Diferença <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                                        <th class="px-2 py-2 text-center sortable group" data-sort="variacaoNum" data-target="status">Status <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                                        
+                                        <!-- Novas Colunas de Projeção -->
+                                        <th class="px-3 py-2 text-right sortable group bg-blue-900/10 border-l border-blue-900/30" data-sort="mediaMensal" data-target="status">Média/Mês <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                                        <th class="px-2 py-2 text-center sortable group bg-blue-900/10 w-36" data-sort="projMes" data-target="status">Novo Valor <br><span class="text-[9px] font-normal text-gray-400">(Próx. Mês)</span> <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                                        <th class="px-3 py-2 text-right sortable group bg-blue-900/10" data-sort="projAno" data-target="status">Redução <br><span class="text-[9px] font-normal text-gray-400">(Ano)</span> <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-status" class="divide-y divide-dark-border"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Matriz -->
+                    <div id="tab-matriz" class="tab-content hidden">
+                        <div class="text-xs text-brand-cyan bg-[#0B1120] py-2 px-4 border-b border-dark-border italic">
+                            <i class="fa-solid fa-hand-pointer mr-1"></i> Clique sobre a linha da Descrição para ver as filiais.
+                        </div>
+                        <div class="table-scroll-container custom-scroll">
+                            <table class="w-full text-sm text-left text-gray-300">
+                                <thead class="text-xs uppercase bg-[#0B1120] text-gray-400 sticky top-0 border-b border-dark-border z-10 shadow-md" id="thead-matriz"></thead>
+                                <tbody id="tbody-matriz" class="divide-y divide-dark-border/50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Lançamentos Detalhados -->
+                    <div id="tab-lancamentos" class="tab-content hidden">
+                        <div class="text-xs text-amber-500 bg-[#0B1120] py-2 px-4 border-b border-dark-border italic flex justify-between">
+                            <span><i class="fa-solid fa-list mr-1"></i> Visão de todos os lançamentos individuais. Utilize a barra de rolagem da tabela para descer.</span>
+                            <span id="lancamentos-count">0 Lançamentos</span>
+                        </div>
+                        <div class="table-scroll-container custom-scroll">
+                            <table class="w-full text-sm text-left text-gray-300">
+                                <thead class="text-xs uppercase bg-[#0B1120] text-gray-400 sticky top-0 border-b border-dark-border z-10 shadow-md">
+                                    <tr>
+                                        <th class="px-4 py-3 sortable group" data-sort="dataLancamento" data-target="lancamentos">Data <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                        <th class="px-4 py-3 sortable group" data-sort="cd" data-target="lancamentos">CD <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                        <th class="px-4 py-3 sortable group" data-sort="filial" data-target="lancamentos">Filial <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                        <th class="px-4 py-3 sortable group" data-sort="conta" data-target="lancamentos">Conta <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                        <th class="px-4 py-3 sortable group" data-sort="descricao" data-target="lancamentos">Subgrupo <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                        <th class="px-4 py-3 sortable group" data-sort="historico" data-target="lancamentos">Histórico / Fornecedor <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                        <th class="px-4 py-3 text-right sortable group" data-sort="valor" data-target="lancamentos">Valor Apurado <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-lancamentos" class="divide-y divide-dark-border"></tbody>
+                            </table>
+                        </div>
                     </div>
                     
-                    <div class="flex flex-col lg:flex-row h-[380px] gap-6 mt-2 items-center w-full">
-                        <!-- Canvas da Pizza -->
-                        <div class="w-full lg:w-5/12 h-[250px] relative flex justify-center items-center">
-                            <canvas id="chartComposicao"></canvas>
+                    <div class="bg-[#0B1120] p-3 border-t border-dark-border text-xs text-gray-500 flex justify-between items-center">
+                        <span id="active-filters-info">Filtros: Nenhum</span>
+                        <span id="table-footer-info">0 registros no resumo</span>
+                    </div>
+                </section>
+            </div>
+
+            <!-- VIEW 2: PLANO DE REDUÇÃO (Dashboard Preditivo) -->
+            <div id="view-reducao" class="space-y-6 hidden">
+                <div class="bg-amber-500/10 border border-amber-500/30 text-amber-500 p-4 rounded-xl flex items-center gap-3">
+                    <i class="fa-solid fa-bullseye text-2xl"></i>
+                    <div>
+                        <h3 class="font-bold text-white">Análise Preditiva e Metas de Economia</h3>
+                        <p class="text-sm">Este painel calcula a economia anualizada baseada na média mensal atual cruzada com os novos valores (metas) inseridos na tabela de "Resumo Orçamentário c/ Projeções".</p>
+                    </div>
+                </div>
+
+                <!-- KPIs de Projeção -->
+                <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card">
+                        <p class="text-sm font-medium text-gray-400 mb-1">Custo Anualizado (Ritmo Atual / Média)</p>
+                        <h2 class="text-3xl font-bold text-white" id="reducao-kpi-atual">R$ 0,00</h2>
+                    </div>
+                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card">
+                        <p class="text-sm font-medium text-brand-cyan mb-1">Novo Custo Anual (Com Metas de Redução)</p>
+                        <h2 class="text-3xl font-bold text-brand-cyan" id="reducao-kpi-novo">R$ 0,00</h2>
+                    </div>
+                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card">
+                        <p class="text-sm font-medium text-emerald-400 mb-1">Redução Total Projetada no Ano</p>
+                        <h2 class="text-3xl font-bold text-emerald-400" id="reducao-kpi-economia">R$ 0,00</h2>
+                    </div>
+                </section>
+
+                <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-column text-amber-500"></i> Projeção de Redução por CD (Ano)
+                            </h3>
                         </div>
-                        
-                        <!-- Legenda Custom HTML Vertical -->
-                        <div class="w-full lg:w-7/12 h-[350px] flex flex-col">
-                            <div class="text-[11px] text-gray-500 mb-2 italic bg-[#0f172a] p-2 rounded border border-dark-border shadow-inner leading-relaxed">
-                                <i class="fa-solid fa-hand-pointer text-brand-cyan"></i> <strong>Passe o rato e Clique</strong> no nome da lista abaixo para filtrar.<br>
-                                <i class="fa-solid fa-keyboard text-brand-purple"></i> <kbd class="bg-gray-800 px-1 rounded text-[10px]">Ctrl</kbd> + Clique para múltipla seleção.
-                            </div>
-                            <div id="custom-legend-box" class="flex-grow overflow-y-auto custom-scroll flex flex-col gap-1 pr-2 pb-2">
-                                <!-- Injetado por JS (1 item por linha) -->
-                            </div>
+                        <div class="chart-container flex-grow" style="height: 350px;"><canvas id="chartReducaoCD"></canvas></div>
+                    </div>
+                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-amber-500"></i> Projeção de Redução por Subgrupo (Ano)
+                            </h3>
                         </div>
+                        <div class="chart-container flex-grow" style="height: 350px;"><canvas id="chartReducaoConta"></canvas></div>
                     </div>
-                </div>
-            </section>
-
-            <!-- ROW 2: Gráfico Filial (Full Width Horizontal) -->
-            <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-map-location-dot text-brand-cyan"></i> Orçamento vs Realizado por Filial (Detalhado)
-                    </h3>
-                </div>
-                <div class="chart-container flex-grow" style="height: 350px;"><canvas id="chartFilial"></canvas></div>
-            </section>
-
-            <!-- ROW 3: Gráfico Descrições (Full Width Horizontal) -->
-            <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-list-check text-amber-500"></i> Orçamento vs Realizado por Descrição (Contas)
-                    </h3>
-                </div>
-                <div class="chart-container flex-grow" style="height: 380px;"><canvas id="chartDescricoes"></canvas></div>
-            </section>
-
-            <!-- ROW 4: Evolução Mensal (Full Width) -->
-            <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-chart-line text-brand-cyan"></i> Evolução Mensal Geral
-                    </h3>
-                </div>
-                <div class="chart-container" style="height: 300px;"><canvas id="chartEvolucao"></canvas></div>
-            </section>
-
-            <!-- Tables (Tabs) -->
-            <section class="bg-dark-card border border-dark-border rounded-xl glow-card flex flex-col overflow-hidden">
-                <div class="flex border-b border-dark-border bg-[#0B1120]">
-                    <button onclick="switchTab('tab-status')" id="btn-tab-status" class="tab-btn active flex-1 py-4 text-sm font-semibold transition-colors flex justify-center items-center gap-2">
-                        <i class="fa-solid fa-temperature-half"></i> Análise de Variação e Status
-                    </button>
-                    <button onclick="switchTab('tab-matriz')" id="btn-tab-matriz" class="tab-btn text-gray-400 hover:text-white flex-1 py-4 text-sm font-semibold transition-colors flex justify-center items-center gap-2 border-l border-dark-border">
-                        <i class="fa-solid fa-calendar-days"></i> Matriz Mensal Detalhada (Drill-down)
-                    </button>
-                </div>
-
-                <div id="tab-status" class="tab-content block overflow-x-auto">
-                    <div class="text-xs text-brand-cyan bg-[#0B1120] py-2 px-4 border-b border-dark-border italic flex justify-between">
-                        <span><i class="fa-solid fa-circle-info mr-1"></i> Ordenação Exclusiva: Clicar numa coluna zera a ordem das outras. Ciclo: Maior -> Menor -> Restaura Origem.</span>
-                    </div>
-                    <table class="w-full text-sm text-left text-gray-300">
-                        <thead class="text-xs uppercase bg-[#0B1120] text-gray-400 sticky top-0 border-b border-dark-border z-10">
-                            <tr>
-                                <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="conta" data-target="status">Conta <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
-                                <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="descricao" data-target="status">Descrição <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
-                                <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="cd" data-target="status">CD <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
-                                <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="filial" data-target="status">Filial <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
-                                <th class="px-4 py-3 text-right sortable group bg-[#0B1120]" data-sort="orcamento" data-target="status">Orçado <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
-                                <th class="px-4 py-3 text-right sortable group bg-[#0B1120]" data-sort="realizado" data-target="status">Realizado <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
-                                <th class="px-4 py-3 text-right sortable group bg-[#0B1120]" data-sort="saldo" data-target="status">Diferença <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
-                                <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="variacaoNum" data-target="status">Variação / Status <i class="fa-solid fa-sort ml-1 text-gray-600 group-hover:text-brand-cyan transition-colors"></i></th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-status" class="divide-y divide-dark-border"></tbody>
-                    </table>
-                </div>
-
-                <div id="tab-matriz" class="tab-content hidden overflow-x-auto">
-                    <div class="text-xs text-brand-cyan bg-[#0B1120] py-2 px-4 border-b border-dark-border italic">
-                        <i class="fa-solid fa-hand-pointer mr-1"></i> Clique sobre a linha da Descrição para ver as filiais. Inclui a coluna de <strong>Diferença</strong> (Orçado - Realizado).
-                    </div>
-                    <table class="w-full text-sm text-left text-gray-300">
-                        <thead class="text-xs uppercase bg-[#0B1120] text-gray-400 sticky top-0 border-b border-dark-border z-10" id="thead-matriz"></thead>
-                        <tbody id="tbody-matriz" class="divide-y divide-dark-border/50"></tbody>
-                    </table>
-                </div>
-                
-                <div class="bg-[#0B1120] p-3 border-t border-dark-border text-xs text-gray-500 flex justify-between items-center">
-                    <span id="active-filters-info">Filtros: Nenhum</span>
-                    <span id="table-footer-info">0 registros</span>
-                </div>
-            </section>
+                </section>
+            </div>
         </div>
     </main>
 
@@ -446,27 +531,15 @@
         const mesesNomesGlobais = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
         const extendedPalette = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#f43f5e', '#84cc16', '#14b8a6', '#6366f1', '#d946ef', '#f97316', '#eab308', '#22c55e', '#0ea5e9', '#a855f7', '#fb7185', '#bef264', '#2dd4bf', '#818cf8', '#e879f9', '#fb923c'];
 
-        // MAPEAMENTO EXATO DOS 8 CDs (Agrupa as 13 Filiais listadas exatamente)
+        // MAPEAMENTO EXATO DOS 8 CDs
         const CD_MAPPING = {
-            'TPH': 'Pinhais/PR',
-            'API': 'Pinhais/PR',
-            
-            'TPA': 'Esteio/RS',
-            'TBA': 'Esteio/RS',
-            'TBE': 'Esteio/RS',
-            
-            'TCG': 'Campo Grande/MS',
-            'MCD': 'Campo Grande/MS',
-            
-            'TCV': 'Cascavel/PR',
-            'ABC': 'Cascavel/PR',
-            
+            'TPH': 'Pinhais/PR', 'API': 'Pinhais/PR',
+            'TPA': 'Esteio/RS', 'TBA': 'Esteio/RS', 'TBE': 'Esteio/RS',
+            'TCG': 'Campo Grande/MS', 'MCD': 'Campo Grande/MS',
+            'TCV': 'Cascavel/PR', 'ABC': 'Cascavel/PR',
             'TBL': 'Londrina/PR',
-            
             'TCA': 'Cuiabá/MT',
-            
             'TSJ': 'São José dos Campos/SP',
-            
             'CTD': 'Campinas/SP'
         };
 
@@ -475,13 +548,24 @@
             return CD_MAPPING[f] || `Outros (${f})`; 
         }
 
+        // ESTADO GLOBAL: Orçamentos (Agregados) e Detalhes (Dia a Dia)
         let state = {
-            data: [], filteredData: [],
+            aggregatedData: [], 
+            filteredAggregated: [],
+            detailedData: [],
+            filteredDetailed: [],
+            
+            projections: {}, // { "conta|filial": novoValorReduzido }
+
+            mesesAtivosArray: [],
             mesesDisponiveis: [], filiaisDisponiveis: [], cdsDisponiveis: [],
-            filters: { month: [], branch: [], cd: [], category: [] },
+            filters: { month: 'Todos', branch: 'Todas', cd: 'Todos', category: 'Todas' },
+            
             sortStatus: { column: 'none', direction: 'none' }, 
             sortMatriz: { column: 'none', direction: 'none' },
-            charts: { filial: null, cd: null, composicao: null, evolucao: null, descricoes: null },
+            sortLancamentos: { column: 'none', direction: 'none' },
+            
+            charts: { filial: null, cd: null, composicao: null, evolucao: null, descricoes: null, reducaoCD: null, reducaoConta: null },
             expandedRows: {}
         };
 
@@ -492,6 +576,12 @@
             if (Math.abs(num) >= 1000000) return (num / 1000000).toFixed(1).replace('.', ',') + 'M';
             if (Math.abs(num) >= 1000) return (num / 1000).toFixed(0) + 'k';
             return num.toFixed(0);
+        };
+        const formatDate = (dateStr) => {
+            if(!dateStr) return '';
+            const d = new Date(dateStr);
+            if(isNaN(d)) return dateStr;
+            return d.toLocaleDateString('pt-BR', {timeZone: 'UTC'}); 
         };
 
         document.addEventListener('FirebaseReady', () => {
@@ -505,45 +595,65 @@
                 const userUid = window.auth.currentUser?.uid;
                 if (!userUid) throw new Error("Usuário não autenticado no banco");
 
-                const lancamentosRef = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'lancamentos');
-                const querySnapshot = await window.getDocs(lancamentosRef);
-                
-                let rawDataFromCloud = [];
-                querySnapshot.forEach((doc) => { rawDataFromCloud.push(doc.data()); });
+                // Puxar Agregados (Orçamentos)
+                const aggRef = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'agregados');
+                const aggSnap = await window.getDocs(aggRef);
+                let rawAgg = [];
+                aggSnap.forEach((doc) => { rawAgg.push(doc.data()); });
 
-                if (rawDataFromCloud.length > 0) {
-                    processRawData(rawDataFromCloud, false);
+                // Puxar Detalhados (Transações)
+                const detRef = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'detalhados');
+                const detSnap = await window.getDocs(detRef);
+                let rawDet = [];
+                detSnap.forEach((doc) => { rawDet.push(doc.data()); });
+
+                if (rawAgg.length > 0) {
+                    processParsedData(rawAgg, rawDet, false);
                     document.getElementById('last-update').innerHTML = `<i class="fa-solid fa-cloud-check text-emerald-400 mr-1"></i> Sincronizado (Cloud)`;
                 } else {
-                    seedDatabaseFromLocalCSV();
+                    document.getElementById('loading-state').classList.add('hidden');
+                    document.getElementById('empty-state-alert').classList.remove('hidden');
+                    document.getElementById('empty-state-alert').classList.add('flex');
                 }
             } catch (error) {
                 console.error("Erro Nuvem:", error);
-                seedDatabaseFromLocalCSV();
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('empty-state-alert').classList.remove('hidden');
+                document.getElementById('empty-state-alert').classList.add('flex');
             }
         }
 
-        async function uploadDataToCloud(dataArray) {
+        async function uploadDataToCloud(aggArray, detArray) {
             document.getElementById('empty-state-alert').style.display = 'none';
             document.getElementById('empty-state-alert').classList.remove('flex');
             document.getElementById('loading-state').classList.remove('hidden');
             document.getElementById('dashboard-content').classList.add('hidden');
-            document.getElementById('sync-status').textContent = `Enviando novos registros para a nuvem...`;
+            document.getElementById('sync-status').textContent = `Enviando orçamentos e lançamentos para a nuvem...`;
 
             try {
                 const batches = [];
                 let currentBatch = window.writeBatch(window.db);
                 let opCount = 0;
 
-                for (let i = 0; i < dataArray.length; i++) {
-                    const item = dataArray[i];
-                    const docId = `L-${item.mesStr}-${item.filial.replace(/[^a-zA-Z0-9]/g, '')}-${item.conta.replace(/[^a-zA-Z0-9]/g, '')}`;
-                    const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'lancamentos', docId);
-                    
+                // 1. Sobe Agregados
+                for (let i = 0; i < aggArray.length; i++) {
+                    const item = aggArray[i];
+                    const docId = `A-${item.mesStr}-${item.filial.replace(/[^a-zA-Z0-9]/g, '')}-${item.conta.replace(/[^a-zA-Z0-9]/g, '')}`;
+                    const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'agregados', docId);
                     currentBatch.set(docRef, item); opCount++;
-
                     if (opCount === 450) { batches.push(currentBatch); currentBatch = window.writeBatch(window.db); opCount = 0; }
                 }
+
+                // 2. Sobe Detalhados
+                for (let i = 0; i < detArray.length; i++) {
+                    const item = detArray[i];
+                    const safeFilial = item.filial.replace(/[^a-zA-Z0-9]/g, '');
+                    const docId = `D-${item.mesStr}-${safeFilial}-${i}-${Date.now()}`;
+                    const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'detalhados', docId);
+                    currentBatch.set(docRef, item); opCount++;
+                    if (opCount === 450) { batches.push(currentBatch); currentBatch = window.writeBatch(window.db); opCount = 0; }
+                }
+
                 if (opCount > 0) batches.push(currentBatch);
                 for (let batch of batches) { await batch.commit(); }
 
@@ -555,47 +665,45 @@
                 }, 1000);
 
             } catch (e) {
-                alert("Erro ao salvar na nuvem. Verifique o console.");
+                alert("Erro ao salvar na nuvem. Os dados ficarão apenas nesta tela por enquanto.");
                 document.getElementById('loading-state').classList.add('hidden');
                 document.getElementById('dashboard-content').classList.remove('hidden');
             }
         }
 
-        function seedDatabaseFromLocalCSV() {
-            document.getElementById('sync-status').textContent = 'Buscando base semente (base_dados.csv)...';
-            fetch('base_dados.csv')
-                .then(response => { if (!response.ok) throw new Error('Não encontrado'); return response.text(); })
-                .then(csvText => {
-                    Papa.parse(csvText, { header: true, skipEmptyLines: true, complete: function(results) { processRawData(results.data, true); } });
-                }).catch(error => {
-                    document.getElementById('loading-state').classList.add('hidden');
-                    document.getElementById('empty-state-alert').classList.remove('hidden');
-                    document.getElementById('empty-state-alert').classList.add('flex');
-                });
-        }
-
+        // IMPORTAÇÃO MANUAL EXCEL MÚLTIPLAS ABAS
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             const btn = event.target.previousElementSibling;
             const originalContent = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Processando...`;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Lendo Excel...`;
 
-            if (file.name.endsWith('.csv')) {
-                Papa.parse(file, { header: true, skipEmptyLines: true, complete: function(results) { processRawData(results.data, true); btn.innerHTML = originalContent; event.target.value = ''; } });
-            } else {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, {type: 'array', cellDates: true});
-                        const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                        if(json.length > 0) processRawData(json, true);
-                    } catch (err) { alert("Erro ao ler Excel."); } finally { btn.innerHTML = originalContent; event.target.value = ''; }
-                };
-                reader.readAsArrayBuffer(file);
-            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+                    
+                    let sheetNomes = workbook.SheetNames;
+                    let nomeAbaDetalhe = sheetNomes.find(n => n.toLowerCase().includes('detalhe')) || sheetNomes[0];
+                    let nomeAbaResumo = sheetNomes.find(n => n.toLowerCase().includes('orçamento') || n.toLowerCase().includes('descrição') || n.toLowerCase().includes('resumo')) || sheetNomes[1];
+                    
+                    if(!nomeAbaResumo) nomeAbaResumo = nomeAbaDetalhe;
+
+                    const jsonDetalhes = XLSX.utils.sheet_to_json(workbook.Sheets[nomeAbaDetalhe], { raw: false }); 
+                    const jsonResumo = XLSX.utils.sheet_to_json(workbook.Sheets[nomeAbaResumo]);
+
+                    processExcelUpload(jsonResumo, jsonDetalhes);
+                } catch (err) { 
+                    console.error(err);
+                    alert("Erro ao processar o arquivo Excel. Garanta que ele tem as duas abas necessárias."); 
+                } finally { 
+                    btn.innerHTML = originalContent; event.target.value = ''; 
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         function parseFinanceValue(val) {
@@ -608,64 +716,118 @@
             let num = parseFloat(s); return isNaN(num) ? 0 : num;
         }
 
-        function processRawData(rawData, shouldUploadToCloud = false) {
-            let processed = [];
-            let mesesSet = new Set();
-            let filiaisSet = new Set();
-            let cdsSet = new Set();
+        function processExcelUpload(jsonResumo, jsonDetalhes) {
+            let processedAgg = [];
+            let processedDet = [];
 
-            rawData.forEach((row) => {
+            // 1. Resumo Orçamentos
+            jsonResumo.forEach((row) => {
                 const cleanRow = {};
                 for (let key in row) cleanRow[key.trim().toUpperCase()] = row[key];
 
-                let mesStrFormatado = cleanRow['MESSTR'] || 'N/A';
-                let mesNumFormatado = cleanRow['MESNUM'] || 0;
+                let mesStrFormatado = 'N/A'; let mesNumFormatado = 0;
+                const dataRef = cleanRow['MÊS_REF'] || cleanRow['MES_REF'] || cleanRow['MÊS REF'];
                 
-                if (mesStrFormatado === 'N/A') {
-                    const dataRef = cleanRow['MÊS_REF'] || cleanRow['MES_REF'] || cleanRow['MÊS REF'];
-                    if (dataRef) {
-                        if (dataRef instanceof Date) { mesNumFormatado = dataRef.getMonth() + 1; } 
-                        else {
-                            const strData = String(dataRef).trim();
-                            if (strData.includes('-')) { const p = strData.split('-'); if (p.length >= 2) mesNumFormatado = parseInt(p[1], 10); } 
-                            else if (strData.includes('/')) { const p = strData.split('/'); if (p.length >= 2) mesNumFormatado = parseInt(p[1], 10); }
-                        }
-                        if(mesNumFormatado >= 1 && mesNumFormatado <= 12) mesStrFormatado = mesesNomesGlobais[mesNumFormatado - 1];
+                if (dataRef) {
+                    if (dataRef instanceof Date) { mesNumFormatado = dataRef.getMonth() + 1; } 
+                    else {
+                        const strData = String(dataRef).trim();
+                        if (strData.includes('-')) { const p = strData.split('-'); if (p.length >= 2) mesNumFormatado = parseInt(p[1], 10); } 
+                        else if (strData.includes('/')) { const p = strData.split('/'); if (p.length >= 2) mesNumFormatado = parseInt(p[1], 10); }
+                        else if (!isNaN(parseInt(strData))) { mesNumFormatado = parseInt(strData); } 
                     }
+                    if(mesNumFormatado >= 1 && mesNumFormatado <= 12) mesStrFormatado = mesesNomesGlobais[mesNumFormatado - 1];
                 }
 
                 if (mesStrFormatado === 'N/A') return;
 
-                let orcamentoVal = cleanRow['ORCAMENTO'] !== undefined ? cleanRow['ORCAMENTO'] : parseFinanceValue(cleanRow['ORCAMENTO PREVISTO'] || cleanRow['ORÇAMENTO PREVISTO']);
-                let realizadoVal = cleanRow['REALIZADO'] !== undefined && typeof cleanRow['REALIZADO'] === 'number' ? cleanRow['REALIZADO'] : parseFinanceValue(cleanRow['REALIZADO']);
+                let orcamentoVal = parseFinanceValue(cleanRow['ORCAMENTO PREVISTO'] || cleanRow['ORÇAMENTO PREVISTO'] || cleanRow['ORCAMENTO']);
+                let realizadoVal = parseFinanceValue(cleanRow['REALIZADO']);
+                
+                // Mês Anterior para Status Temporal
+                let mesAnteriorVal = parseFinanceValue(cleanRow['MÊS ANTERIOR'] || cleanRow['MES ANTERIOR']);
+                let mesRetrasadoVal = parseFinanceValue(cleanRow['MÊS RETRASADO'] || cleanRow['MES RETRASADO']);
+
                 const filialVal = cleanRow['FILIAL'] ? String(cleanRow['FILIAL']).trim() : 'S/ Filial';
                 
-                const cdVal = getCD(filialVal);
-
-                processed.push({
+                processedAgg.push({
                     conta: String(cleanRow['CONTA SICF'] || cleanRow['CONTA'] || '-').trim(),
                     descricao: String(cleanRow['DESCRIÇÃO'] || cleanRow['DESCRICAO'] || '-').trim(),
                     filial: filialVal,
-                    cd: cdVal,
+                    cd: getCD(filialVal),
                     mesNum: mesNumFormatado,
                     mesStr: mesStrFormatado,
                     orcamento: orcamentoVal,
-                    realizado: realizadoVal
+                    realizado: realizadoVal,
+                    mesAnterior: mesAnteriorVal,
+                    mesRetrasado: mesRetrasadoVal
                 });
             });
 
-            if (processed.length === 0) return;
+            // 2. Lançamentos Detalhados
+            jsonDetalhes.forEach((row) => {
+                const cleanRow = {};
+                for (let key in row) cleanRow[key.trim().toUpperCase()] = row[key];
 
-            if (shouldUploadToCloud && state.data.length > 0) {
-                state.data = [...state.data, ...processed];
-                uploadDataToCloud(processed); 
-            } else {
-                state.data = processed;
-                if(shouldUploadToCloud) uploadDataToCloud(processed);
+                let mesStrFormatado = 'N/A'; let mesNumFormatado = 0;
+                
+                const dataRef = cleanRow['MÊS'] || cleanRow['MES'];
+                if(dataRef) {
+                    mesNumFormatado = parseInt(dataRef);
+                    if(mesNumFormatado >= 1 && mesNumFormatado <= 12) mesStrFormatado = mesesNomesGlobais[mesNumFormatado - 1];
+                } else if(cleanRow['DATA']) {
+                    try { const d = new Date(cleanRow['DATA']); mesNumFormatado = d.getMonth() + 1; mesStrFormatado = mesesNomesGlobais[mesNumFormatado - 1]; } catch(e){}
+                }
+
+                if (mesStrFormatado === 'N/A') return; 
+
+                const filialVal = cleanRow['FILIAL'] ? String(cleanRow['FILIAL']).trim() : 'S/ Filial';
+                
+                let valorRaw = cleanRow['SALDO APURADO (D/C)'] || cleanRow['SALDO APURADO'] || cleanRow['VALOR'] || cleanRow['SALDO'];
+                if(valorRaw === undefined) {
+                    const keyEncontrada = Object.keys(cleanRow).find(k => k.includes('SALDO') || k.includes('VALOR') || k.includes('APURADO'));
+                    if(keyEncontrada) valorRaw = cleanRow[keyEncontrada];
+                }
+
+                processedDet.push({
+                    dataLancamento: cleanRow['DATA'] || '-',
+                    conta: String(cleanRow['CONTA SICF ORIGINAL'] || cleanRow['CONTA SICF'] || '-').trim(),
+                    descricao: String(cleanRow['DESCRIÇÃO CONTA'] || cleanRow['DESCRIÇÃO'] || '-').trim(),
+                    historico: String(cleanRow['HISTÓRICO'] || cleanRow['HISTORICO'] || '-').trim(),
+                    filial: filialVal,
+                    cd: getCD(filialVal),
+                    mesNum: mesNumFormatado,
+                    mesStr: mesStrFormatado,
+                    valor: parseFinanceValue(valorRaw),
+                    tipo: cleanRow['D/C'] || '-'
+                });
+            });
+
+            if (processedAgg.length === 0 && processedDet.length === 0) {
+                alert("Nenhum dado válido encontrado. Verifique as colunas do seu Excel.");
+                return;
             }
 
-            state.data.forEach(d => { mesesSet.add(d.mesStr); filiaisSet.add(d.filial); cdsSet.add(d.cd); });
-            state.mesesDisponiveis = Array.from(mesesSet).sort((a, b) => mesesNomesGlobais.indexOf(a) - mesesNomesGlobais.indexOf(b));
+            state.aggregatedData = [...state.aggregatedData, ...processedAgg];
+            state.detailedData = [...state.detailedData, ...processedDet];
+            
+            uploadDataToCloud(processedAgg, processedDet);
+            processParsedData(state.aggregatedData, state.detailedData, false);
+        }
+
+        function processParsedData(aggData, detData, shouldUpload = false) {
+            state.aggregatedData = aggData;
+            state.detailedData = detData;
+
+            let mesesSet = new Set();
+            let filiaisSet = new Set();
+            let cdsSet = new Set();
+
+            state.aggregatedData.forEach(d => { mesesSet.add(d.mesStr); filiaisSet.add(d.filial); cdsSet.add(d.cd); });
+            state.detailedData.forEach(d => { mesesSet.add(d.mesStr); filiaisSet.add(d.filial); cdsSet.add(d.cd); });
+
+            state.mesesAtivosArray = Array.from(mesesSet).sort((a, b) => mesesNomesGlobais.indexOf(a) - mesesNomesGlobais.indexOf(b));
+            state.mesesDisponiveis = [...state.mesesAtivosArray];
             state.filiaisDisponiveis = Array.from(filiaisSet).sort();
             state.cdsDisponiveis = Array.from(cdsSet).sort();
             
@@ -684,19 +846,19 @@
         function buildFilterUI() {
             const listM = document.getElementById('list-month'); listM.innerHTML = '';
             state.mesesDisponiveis.forEach(m => {
-                const isChecked = state.filters.month.length === 0 || state.filters.month.includes(m);
+                const isChecked = state.filters.month === 'Todos' || state.filters.month.includes(m);
                 listM.insertAdjacentHTML('beforeend', `<label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-white px-1 py-1 rounded hover:bg-dark-border/50"><input type="checkbox" class="cb-custom cb-month" value="${m}" ${isChecked ? 'checked' : ''} onchange="handleItemCheck('month')"><span>${m}</span></label>`);
             });
 
             const listCD = document.getElementById('list-cd'); listCD.innerHTML = '';
             state.cdsDisponiveis.forEach(cd => {
-                const isChecked = state.filters.cd.length === 0 || state.filters.cd.includes(cd);
+                const isChecked = state.filters.cd === 'Todos' || state.filters.cd.includes(cd);
                 listCD.insertAdjacentHTML('beforeend', `<label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-white px-1 py-1 rounded hover:bg-dark-border/50"><input type="checkbox" class="cb-custom cb-cd" value="${cd}" ${isChecked ? 'checked' : ''} onchange="handleItemCheck('cd')"><span class="truncate">${cd}</span></label>`);
             });
 
             const listF = document.getElementById('list-branch'); listF.innerHTML = '';
             state.filiaisDisponiveis.forEach(f => {
-                const isChecked = state.filters.branch.length === 0 || state.filters.branch.includes(f);
+                const isChecked = state.filters.branch === 'Todas' || state.filters.branch.includes(f);
                 listF.insertAdjacentHTML('beforeend', `<label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-white px-1 py-1 rounded hover:bg-dark-border/50"><input type="checkbox" class="cb-custom cb-branch" value="${f}" ${isChecked ? 'checked' : ''} onchange="handleItemCheck('branch')"><span class="truncate">${f}</span></label>`);
             });
             updateFilterLabels();
@@ -714,31 +876,35 @@
             
             checkAll.checked = allChecked;
             const selected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-            state.filters[type] = (allChecked || selected.length === checkboxes.length) ? [] : selected;
+            
+            if(type === 'month') state.filters.month = (allChecked || selected.length === checkboxes.length) ? 'Todos' : selected;
+            if(type === 'cd') state.filters.cd = (allChecked || selected.length === checkboxes.length) ? 'Todos' : selected;
+            if(type === 'branch') state.filters.branch = (allChecked || selected.length === checkboxes.length) ? 'Todas' : selected;
+            
             updateFilterLabels(); updateApp();
         }
 
         function updateFilterLabels() {
             const lMonth = document.getElementById('label-month');
-            if(state.filters.month.length === 0) lMonth.textContent = "Meses (Todos)";
+            if(state.filters.month === 'Todos' || state.filters.month.length === 0) lMonth.textContent = "Meses (Todos)";
             else if(state.filters.month.length === 1) lMonth.textContent = state.filters.month[0];
             else lMonth.textContent = `Meses (${state.filters.month.length})`;
 
             const lCD = document.getElementById('label-cd');
-            if(state.filters.cd.length === 0) lCD.textContent = "CDs (Todos)";
+            if(state.filters.cd === 'Todos' || state.filters.cd.length === 0) lCD.textContent = "CDs (Todos)";
             else if(state.filters.cd.length === 1) lCD.textContent = state.filters.cd[0];
             else lCD.textContent = `CDs (${state.filters.cd.length})`;
 
             const lBranch = document.getElementById('label-branch');
-            if(state.filters.branch.length === 0) lBranch.textContent = "Filial (Todas)";
+            if(state.filters.branch === 'Todas' || state.filters.branch.length === 0) lBranch.textContent = "Filial (Todas)";
             else if(state.filters.branch.length === 1) lBranch.textContent = state.filters.branch[0];
             else lBranch.textContent = `Filiais (${state.filters.branch.length})`;
         }
 
         function resetAllFilters(triggerUpdate = true) {
-            state.filters = { month: [], branch: [], cd: [], category: [] };
+            state.filters = { month: 'Todos', branch: 'Todas', cd: 'Todos', category: 'Todas' };
             document.getElementById('category-filter-badge').classList.add('hidden');
-            if (state.data.length > 0) {
+            if (state.aggregatedData.length > 0) {
                 ['month', 'branch', 'cd'].forEach(type => {
                     const checkAll = document.getElementById(`check-all-${type}`);
                     if (checkAll) checkAll.checked = true;
@@ -750,7 +916,7 @@
         }
 
         function updateApp() {
-            if(state.data.length === 0) return;
+            if(state.aggregatedData.length === 0 && state.detailedData.length === 0) return;
             
             const checksEmpty = ['month', 'branch', 'cd'].some(type => {
                 const cbs = document.querySelectorAll(`.cb-${type}`);
@@ -758,30 +924,44 @@
             });
 
             if (checksEmpty) {
-                state.filteredData = [];
+                state.filteredAggregated = [];
+                state.filteredDetailed = [];
             } else {
-                state.filteredData = state.data.filter(d => {
-                    const matchM = state.filters.month.length === 0 || state.filters.month.includes(d.mesStr);
-                    const matchC = state.filters.cd.length === 0 || state.filters.cd.includes(d.cd);
-                    const matchB = state.filters.branch.length === 0 || state.filters.branch.includes(d.filial);
-                    const matchCat = state.filters.category.length === 0 || state.filters.category.includes(d.descricao);
+                state.filteredAggregated = state.aggregatedData.filter(d => {
+                    const matchM = state.filters.month === 'Todos' || state.filters.month.includes(d.mesStr);
+                    const matchC = state.filters.cd === 'Todos' || state.filters.cd.includes(d.cd);
+                    const matchB = state.filters.branch === 'Todas' || state.filters.branch.includes(d.filial);
+                    const matchCat = state.filters.category === 'Todas' || state.filters.category.includes(d.descricao);
+                    return matchM && matchC && matchB && matchCat;
+                });
+                
+                state.filteredDetailed = state.detailedData.filter(d => {
+                    const matchM = state.filters.month === 'Todos' || state.filters.month.includes(d.mesStr);
+                    const matchC = state.filters.cd === 'Todos' || state.filters.cd.includes(d.cd);
+                    const matchB = state.filters.branch === 'Todas' || state.filters.branch.includes(d.filial);
+                    const matchCat = state.filters.category === 'Todas' || state.filters.category.includes(d.descricao);
                     return matchM && matchC && matchB && matchCat;
                 });
             }
 
-            updateKPIs(); renderTableStatus(); renderTableMatriz(); updateCharts();
+            updateKPIs(); 
+            renderTableStatus(); 
+            renderTableMatriz(); 
+            renderTableLancamentos(); 
+            updateCharts();
+            updateReducaoTab();
             
             let fInfo = [];
-            if(state.filters.month.length > 0) fInfo.push(`${state.filters.month.length} Mês(es)`);
-            if(state.filters.cd.length > 0) fInfo.push(`${state.filters.cd.length} CD(s)`);
-            if(state.filters.branch.length > 0) fInfo.push(`${state.filters.branch.length} Filial(is)`);
-            if(state.filters.category.length > 0) fInfo.push(`${state.filters.category.length} Subgrupo(s)`);
+            if(state.filters.month !== 'Todos' && state.filters.month.length > 0) fInfo.push(`${state.filters.month.length} Mês(es)`);
+            if(state.filters.cd !== 'Todos' && state.filters.cd.length > 0) fInfo.push(`${state.filters.cd.length} CD(s)`);
+            if(state.filters.branch !== 'Todas' && state.filters.branch.length > 0) fInfo.push(`${state.filters.branch.length} Filial(is)`);
+            if(state.filters.category !== 'Todas') fInfo.push(`Subgrupo: ${state.filters.category}`);
             document.getElementById('active-filters-info').innerHTML = fInfo.length > 0 ? `<i class="fa-solid fa-filter mr-1 text-brand-cyan"></i> Filtros ativos: ${fInfo.join(' | ')}` : 'Filtros: Todos aplicados';
         }
 
         function updateKPIs() {
-            const sumOrçado = state.filteredData.reduce((acc, curr) => acc + curr.orcamento, 0);
-            const sumReal = state.filteredData.reduce((acc, curr) => acc + curr.realizado, 0);
+            const sumOrçado = state.filteredAggregated.reduce((acc, curr) => acc + curr.orcamento, 0);
+            const sumReal = state.filteredAggregated.reduce((acc, curr) => acc + curr.realizado, 0);
             const saldo = sumOrçado - sumReal; 
             const pctExecucao = sumOrçado > 0 ? (sumReal / sumOrçado) * 100 : 0;
 
@@ -804,28 +984,36 @@
             else document.getElementById('kpi-bar').classList.replace('bg-red-500', 'bg-brand-purple');
         }
 
-        function getStatusInfo(variacaoPct) {
-            if (variacaoPct === Infinity || isNaN(variacaoPct)) return { text: 'Sem base', icon: 'fa-circle-question', color: 'text-gray-500', bg: 'bg-gray-500/10' };
-            if (variacaoPct > 10) return { text: `Aumento Crítico (${formatPct(variacaoPct)})`, icon: 'fa-circle-up', color: 'text-red-500', bg: 'bg-red-500/10' };
-            if (variacaoPct > 0 && variacaoPct <= 10) return { text: `Aumento (${formatPct(variacaoPct)})`, icon: 'fa-arrow-trend-up', color: 'text-orange-400', bg: 'bg-orange-500/10' };
-            if (variacaoPct === 0) return { text: `Estável (0,0%)`, icon: 'fa-minus', color: 'text-gray-400', bg: 'bg-gray-500/10' };
-            if (variacaoPct < 0 && variacaoPct >= -10) return { text: `Reduziu (${formatPct(variacaoPct)})`, icon: 'fa-arrow-trend-down', color: 'text-brand-cyan', bg: 'bg-cyan-500/10' };
-            return { text: `Queda Relevante (${formatPct(variacaoPct)})`, icon: 'fa-circle-down', color: 'text-emerald-400', bg: 'bg-emerald-500/10' };
+        // STATUS TEMPORAL CORRIGIDO (Realizado vs Orçado e Mensal)
+        function getStatusInfo(atual, orcamento) {
+            // Lógica Padrão de Estouro
+            if (orcamento === 0 && atual === 0) return { text: 'Estável', icon: 'fa-minus', color: 'text-gray-400', bg: 'bg-gray-500/10' };
+            if (orcamento === 0 && atual > 0) return { text: 'Sem Base', icon: 'fa-circle-question', color: 'text-gray-500', bg: 'bg-gray-500/10' };
+            
+            const delta = ((atual - orcamento) / orcamento) * 100;
+
+            if (delta > 10) return { text: `Estourou (+${formatPct(delta)})`, icon: 'fa-circle-up', color: 'text-red-500', bg: 'bg-red-500/10', obj: delta };
+            if (delta > 0 && delta <= 10) return { text: `Acima (+${formatPct(delta)})`, icon: 'fa-arrow-trend-up', color: 'text-orange-400', bg: 'bg-orange-500/10', obj: delta };
+            if (delta === 0) return { text: `Estável (0,0%)`, icon: 'fa-minus', color: 'text-gray-400', bg: 'bg-gray-500/10', obj: delta };
+            if (delta < 0 && delta >= -10) return { text: `Economia (${formatPct(delta)})`, icon: 'fa-arrow-trend-down', color: 'text-brand-cyan', bg: 'bg-cyan-500/10', obj: delta };
+            return { text: `Alta Econ. (${formatPct(delta)})`, icon: 'fa-circle-down', color: 'text-emerald-400', bg: 'bg-emerald-500/10', obj: delta };
         }
 
         // ==========================================
-        // 4. TABELAS (ORDENAÇÃO EXCLUSIVA E DIFERENÇA)
+        // 4. TABELAS E PROJEÇÃO
         // ==========================================
         function setupSorting(headersSelector, targetType, renderFn) {
             document.querySelectorAll(headersSelector).forEach(th => {
                 const newTh = th.cloneNode(true); th.parentNode.replaceChild(newTh, th);
                 newTh.addEventListener('click', () => {
                     const column = newTh.dataset.sort;
-                    let currentSort = targetType === 'status' ? state.sortStatus : state.sortMatriz;
+                    let currentSort;
+                    if(targetType === 'status') currentSort = state.sortStatus;
+                    else if (targetType === 'matriz') currentSort = state.sortMatriz;
+                    else currentSort = state.sortLancamentos;
                     
-                    if (currentSort.column !== column) {
-                        currentSort.column = column; currentSort.direction = 'desc';
-                    } else {
+                    if (currentSort.column !== column) { currentSort.column = column; currentSort.direction = 'desc'; } 
+                    else {
                         if (currentSort.direction === 'desc') currentSort.direction = 'asc';
                         else if (currentSort.direction === 'asc') currentSort.direction = 'none';
                         else currentSort.direction = 'desc';
@@ -836,7 +1024,11 @@
         }
 
         function applyTableIcons(headersSelector, targetType) {
-            const currentSort = targetType === 'status' ? state.sortStatus : state.sortMatriz;
+            let currentSort;
+            if(targetType === 'status') currentSort = state.sortStatus;
+            else if (targetType === 'matriz') currentSort = state.sortMatriz;
+            else currentSort = state.sortLancamentos;
+
             document.querySelectorAll(headersSelector).forEach(th => {
                 const icon = th.querySelector('i');
                 th.classList.remove('sort-active');
@@ -849,24 +1041,66 @@
             });
         }
 
+        // --- ATUALIZADOR DE PROJEÇÃO ONCHANGE ---
+        window.updateProjectionLive = function(key, val, media) {
+            let num = parseFloat(val);
+            let mediaNum = parseFloat(media);
+            if (isNaN(num) || val === '') {
+                delete state.projections[key];
+                num = mediaNum; 
+            } else {
+                state.projections[key] = num;
+            }
+            
+            const economiaAno = (mediaNum - num) * 12;
+            const ecoEl = document.getElementById('proj-ano-' + key.replace(/[^a-zA-Z0-9]/g, ''));
+            
+            if (ecoEl) {
+                ecoEl.textContent = formatBR(economiaAno);
+                if (economiaAno > 0) {
+                    ecoEl.className = "px-3 py-2 text-right font-bold text-emerald-400 bg-emerald-900/10 text-xs";
+                } else if (economiaAno < 0) {
+                    ecoEl.className = "px-3 py-2 text-right font-bold text-red-400 bg-red-900/10 text-xs";
+                } else {
+                    ecoEl.className = "px-3 py-2 text-right font-bold text-gray-500 bg-blue-900/10 text-xs";
+                }
+            }
+            
+            updateReducaoTab();
+        };
+
         function renderTableStatus() {
             const grouped = {}; let indexTracker = 0;
-            state.filteredData.forEach(d => {
-                const key = `${d.conta}|${d.descricao}|${d.filial}`;
-                if (!grouped[key]) grouped[key] = { originalIndex: indexTracker++, conta: d.conta, descricao: d.descricao, cd: d.cd, filial: d.filial, orcamento: 0, realizado: 0 };
-                grouped[key].orcamento += d.orcamento; grouped[key].realizado += d.realizado;
+            
+            let numMeses = state.filters.month === 'Todos' ? state.mesesAtivosArray.length : 1;
+            if (numMeses === 0) numMeses = 1;
+
+            state.filteredAggregated.forEach(d => {
+                const key = `${d.conta}|${d.filial}`; 
+                if (!grouped[key]) grouped[key] = { originalIndex: indexTracker++, keySafe: key.replace(/[^a-zA-Z0-9]/g, ''), keyReal: key, conta: d.conta, descricao: d.descricao, cd: d.cd, filial: d.filial, orcamento: 0, realizado: 0 };
+                grouped[key].orcamento += d.orcamento; 
+                grouped[key].realizado += d.realizado;
             });
 
             let tableData = Object.values(grouped).map(row => {
                 row.saldo = row.orcamento - row.realizado; 
-                row.variacaoNum = row.orcamento > 0 ? ((row.realizado - row.orcamento) / row.orcamento) * 100 : (row.realizado > 0 ? Infinity : 0);
+                row.statusObj = getStatusInfo(row.realizado, row.orcamento);
+
+                row.mediaMensal = row.realizado / numMeses;
+                
+                let savedProj = state.projections[row.keyReal];
+                row.projMes = savedProj !== undefined ? savedProj : row.mediaMensal; 
+                row.projAno = (row.mediaMensal - row.projMes) * 12; // Calculo Anual
+                row.inputVal = savedProj !== undefined ? savedProj : '';
+
                 return row;
             });
 
             const { column, direction } = state.sortStatus;
             if (direction !== 'none') {
                 tableData.sort((a, b) => {
-                    let valA = a[column]; let valB = b[column];
+                    let valA = column === 'statusObj' ? a.statusObj.obj || 0 : a[column]; 
+                    let valB = column === 'statusObj' ? b.statusObj.obj || 0 : b[column];
                     if (typeof valA === 'string') { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
                     if (valA < valB) return direction === 'asc' ? -1 : 1;
                     if (valA > valB) return direction === 'asc' ? 1 : -1;
@@ -876,24 +1110,40 @@
 
             const tbody = document.getElementById('tbody-status'); tbody.innerHTML = '';
             tableData.forEach(row => {
-                const status = getStatusInfo(row.variacaoNum);
+                const s = row.statusObj;
+                let ecoColor = "text-gray-500 bg-blue-900/10";
+                if(row.projAno > 0) ecoColor = "text-emerald-400 bg-emerald-900/10";
+                if(row.projAno < 0) ecoColor = "text-red-400 bg-red-900/10";
+
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="hover:bg-dark-hover transition-colors border-b border-dark-border">
-                        <td class="px-4 py-3 font-medium text-gray-400 bg-[#0B1120]">${row.conta}</td>
-                        <td class="px-4 py-3 font-medium text-white">${row.descricao}</td>
-                        <td class="px-4 py-3 text-brand-purple">${row.cd}</td>
-                        <td class="px-4 py-3 text-brand-cyan">${row.filial}</td>
-                        <td class="px-4 py-3 text-right">${formatBR(row.orcamento)}</td>
-                        <td class="px-4 py-3 text-right text-white font-medium">${formatBR(row.realizado)}</td>
-                        <td class="px-4 py-3 text-right ${row.saldo < 0 ? 'text-red-400' : 'text-emerald-400'} font-medium">${formatBR(row.saldo)}</td>
-                        <td class="px-4 py-3"><span class="badge ${status.bg} ${status.color} border border-white/5 whitespace-nowrap"><i class="fa-solid ${status.icon} mr-1.5"></i> ${status.text}</span></td>
+                        <td class="px-3 py-2 font-medium text-gray-400 whitespace-nowrap text-xs w-24">${row.conta}</td>
+                        <td class="px-3 py-2 font-medium text-white text-xs truncate max-w-[150px]" title="${row.descricao}">${row.descricao}</td>
+                        <td class="px-2 py-2 text-brand-purple text-xs text-center w-16 truncate" title="${row.cd}">${row.cd}</td>
+                        <td class="px-3 py-2 text-brand-cyan text-xs whitespace-nowrap w-20">${row.filial}</td>
+                        <td class="px-3 py-2 text-right text-xs">${formatBR(row.orcamento)}</td>
+                        <td class="px-3 py-2 text-right text-white font-medium text-xs">${formatBR(row.realizado)}</td>
+                        <td class="px-3 py-2 text-right ${row.saldo < 0 ? 'text-red-400' : 'text-emerald-400'} font-medium text-xs">${formatBR(row.saldo)}</td>
+                        <td class="px-2 py-2 text-center w-28"><span class="badge ${s.bg} ${s.color} border border-white/5 whitespace-nowrap text-[10px]"><i class="fa-solid ${s.icon} mr-1"></i> ${s.text}</span></td>
+                        
+                        <td class="px-3 py-2 text-right text-brand-cyan bg-blue-900/10 text-xs font-semibold">${formatBR(row.mediaMensal)}</td>
+                        <td class="px-2 py-2 border-l border-blue-900/30 w-36">
+                            <div class="relative flex items-center">
+                                <span class="absolute left-2 text-emerald-500/70 font-bold text-[10px]">R$</span>
+                                <input type="number" step="0.01"
+                                    class="w-full bg-[#0B1120] border border-blue-500/30 text-emerald-300 font-bold text-right pl-6 pr-2 py-1.5 rounded focus:ring-1 focus:ring-brand-cyan outline-none transition-all text-xs" 
+                                    placeholder="${row.mediaMensal.toFixed(2)}" 
+                                    value="${row.inputVal}"
+                                    oninput="updateProjectionLive('${row.keyReal}', this.value, '${row.mediaMensal}')">
+                            </div>
+                        </td>
+                        <td class="px-3 py-2 text-right font-bold text-xs ${ecoColor}" id="proj-ano-${row.keySafe}">${formatBR(row.projAno)}</td>
                     </tr>
                 `);
             });
 
             applyTableIcons('th[data-target="status"]', 'status');
             setupSorting('th[data-target="status"]', 'status', renderTableStatus);
-            document.getElementById('table-footer-info').textContent = `${tableData.length} registros`;
         }
 
         window.toggleMatrixRow = function(descSafeId) {
@@ -908,10 +1158,10 @@
         };
 
         function renderTableMatriz() {
-            let mesesParaMostrar = state.filters.month.length === 0 ? state.mesesDisponiveis : state.mesesDisponiveis.filter(m => state.filters.month.includes(m));
+            const mesesParaMostrar = state.filters.month === 'Todos' ? state.mesesAtivosArray : [state.filters.month];
             const grouped = {}; let indexTracker = 0;
 
-            state.filteredData.forEach(d => {
+            state.filteredAggregated.forEach(d => {
                 if (!grouped[d.descricao]) {
                     grouped[d.descricao] = { originalIndex: indexTracker++, conta: d.conta, descricao: d.descricao, totalOrcado: 0, totalRealizado: 0, saldo: 0, filiais: {} };
                     mesesParaMostrar.forEach(m => grouped[d.descricao][m] = 0);
@@ -945,13 +1195,13 @@
 
             let thHtml = `
                 <tr>
-                    <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="conta" data-target="matriz">Conta <i class="fa-solid fa-sort ml-1 text-gray-600 transition-colors"></i></th>
-                    <th class="px-4 py-3 sortable group bg-[#0B1120]" data-sort="descricao" data-target="matriz">Descrição <i class="fa-solid fa-sort ml-1 text-gray-600 transition-colors"></i></th>
-                    <th class="px-4 py-3 text-right bg-[#0d1326] sortable group" data-sort="totalOrcado" data-target="matriz">Total Orçado <i class="fa-solid fa-sort ml-1 text-gray-600 transition-colors"></i></th>
-                    <th class="px-4 py-3 text-right bg-[#0d1326] sortable group" data-sort="totalRealizado" data-target="matriz">Total Realizado <i class="fa-solid fa-sort ml-1 text-gray-600 transition-colors"></i></th>
-                    <th class="px-4 py-3 text-right bg-[#0d1326] border-r border-dark-border sortable group" data-sort="saldo" data-target="matriz">Diferença <i class="fa-solid fa-sort ml-1 text-gray-600 transition-colors"></i></th>
+                    <th class="px-4 py-3 sortable group bg-[#0B1120] whitespace-nowrap" data-sort="conta" data-target="matriz">Conta <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                    <th class="px-4 py-3 sortable group bg-[#0B1120] whitespace-nowrap" data-sort="descricao" data-target="matriz">Descrição <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                    <th class="px-4 py-3 text-right bg-[#0d1326] sortable group whitespace-nowrap" data-sort="totalOrcado" data-target="matriz">Total Orçado <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                    <th class="px-4 py-3 text-right bg-[#0d1326] sortable group whitespace-nowrap" data-sort="totalRealizado" data-target="matriz">Total Realizado <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
+                    <th class="px-4 py-3 text-right bg-[#0d1326] border-r border-dark-border sortable group whitespace-nowrap" data-sort="saldo" data-target="matriz">Diferença <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>
             `;
-            mesesParaMostrar.forEach(m => thHtml += `<th class="px-4 py-3 text-right sortable text-gray-500 group bg-[#0B1120]" data-sort="${m}" data-target="matriz">${m} <i class="fa-solid fa-sort ml-1 text-gray-600 transition-colors"></i></th>`);
+            mesesParaMostrar.forEach(m => thHtml += `<th class="px-4 py-3 text-right sortable text-gray-500 group bg-[#0B1120] whitespace-nowrap" data-sort="${m}" data-target="matriz">${m} <i class="fa-solid fa-sort ml-1 text-gray-600"></i></th>`);
             thHtml += `</tr>`;
             document.getElementById('thead-matriz').innerHTML = thHtml;
 
@@ -961,7 +1211,7 @@
                 
                 let trHtml = `
                     <tr class="hover:bg-dark-hover transition-colors cursor-pointer border-b border-dark-border" onclick="toggleMatrixRow('${descSafeId}')" title="Clique para expandir/recolher">
-                        <td class="px-4 py-3 font-medium text-gray-400 whitespace-nowrap bg-[#0B1120]"><i id="icon-${descSafeId}" class="fa-solid fa-chevron-right text-brand-cyan mr-2 text-[10px] expand-icon ${isExpanded ? 'expanded' : ''}"></i>${row.conta}</td>
+                        <td class="px-4 py-3 font-medium text-gray-400 whitespace-nowrap"><i id="icon-${descSafeId}" class="fa-solid fa-chevron-right text-brand-cyan mr-2 text-[10px] expand-icon ${isExpanded ? 'expanded' : ''}"></i>${row.conta}</td>
                         <td class="px-4 py-3 font-bold text-white whitespace-nowrap">${row.descricao}</td>
                         <td class="px-4 py-3 text-right text-gray-400 bg-[#0d1326]">${formatBR(row.totalOrcado)}</td>
                         <td class="px-4 py-3 text-right font-bold text-brand-cyan bg-[#0d1326]">${formatBR(row.totalRealizado)}</td>
@@ -975,7 +1225,7 @@
                     const borderClass = index === filiaisArray.length - 1 ? 'border-b border-dark-border' : '';
                     trHtml += `
                         <tr class="${isExpanded ? '' : 'hidden'} child-of-${descSafeId} bg-[#060a14] transition-opacity duration-300 ${borderClass}">
-                            <td class="px-4 py-2 bg-[#0B1120]"><div class="w-full h-full border-r border-dark-border/50 border-dashed"></div></td>
+                            <td class="px-4 py-2"><div class="w-full h-full border-r border-dark-border/50 border-dashed"></div></td>
                             <td class="px-4 py-2 font-medium text-gray-400 text-[13px] pl-6 flex items-center gap-2"><i class="fa-solid fa-turn-up fa-rotate-90 text-gray-600"></i> ${filialRow.filial}</td>
                             <td class="px-4 py-2 text-right text-gray-500 text-[13px] bg-[#0d1326]/50">${formatBR(filialRow.totalOrcado)}</td>
                             <td class="px-4 py-2 text-right font-medium text-blue-400 text-[13px] bg-[#0d1326]/50">${formatBR(filialRow.totalRealizado)}</td>
@@ -994,19 +1244,143 @@
             setupSorting('th[data-target="matriz"]', 'matriz', renderTableMatriz);
         }
 
-        // ==========================================
-        // 6. GRÁFICOS (ORDENADOS POR REALIZADO)
-        // ==========================================
-        Chart.defaults.color = '#94a3b8';
-        function updateCharts() {
+        // ABA LANÇAMENTOS DETALHADOS
+        function renderTableLancamentos() {
+            let tableData = [...state.filteredDetailed];
+            
+            tableData.forEach((row, i) => row.originalIndex = i);
 
-            // === Gráfico CDs (ORDENADO PELO MAIOR REALIZADO) ===
+            const { column, direction } = state.sortLancamentos;
+            if (direction !== 'none') {
+                tableData.sort((a, b) => {
+                    let valA = a[column]; let valB = b[column];
+                    if (typeof valA === 'string') { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
+                    if (valA < valB) return direction === 'asc' ? -1 : 1;
+                    if (valA > valB) return direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            } else { tableData.sort((a, b) => a.originalIndex - b.originalIndex); }
+
+            const tbody = document.getElementById('tbody-lancamentos'); tbody.innerHTML = '';
+            
+            const maxRows = Math.min(tableData.length, 500); 
+
+            for(let i = 0; i < maxRows; i++) {
+                const row = tableData[i];
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-dark-hover transition-colors border-b border-dark-border">
+                        <td class="px-4 py-3 text-gray-400 whitespace-nowrap">${formatDate(row.dataLancamento)}</td>
+                        <td class="px-4 py-3 text-brand-purple whitespace-nowrap">${row.cd}</td>
+                        <td class="px-4 py-3 text-brand-cyan whitespace-nowrap">${row.filial}</td>
+                        <td class="px-4 py-3 text-gray-400 whitespace-nowrap">${row.conta}</td>
+                        <td class="px-4 py-3 text-white whitespace-nowrap">${row.descricao}</td>
+                        <td class="px-4 py-3 text-gray-300 max-w-md truncate" title="${row.historico}">${row.historico}</td>
+                        <td class="px-4 py-3 text-right font-medium text-emerald-400 whitespace-nowrap">${formatBR(row.valor)}</td>
+                    </tr>
+                `);
+            }
+
+            if(tableData.length > maxRows) {
+                tbody.insertAdjacentHTML('beforeend', `<tr><td colspan="7" class="px-4 py-4 text-center text-gray-500 italic">Exibindo ${maxRows} de ${tableData.length} registros. Use os filtros acima para refinar.</td></tr>`);
+            }
+
+            document.getElementById('lancamentos-count').innerHTML = `<strong>${tableData.length}</strong> Lançamentos Encontrados`;
+
+            applyTableIcons('th[data-target="lancamentos"]', 'lancamentos');
+            setupSorting('th[data-target="lancamentos"]', 'lancamentos', renderTableLancamentos);
+        }
+
+        // ==========================================
+        // 6. DASHBOARD PREDITIVO (NOVA ABA REDUÇÃO)
+        // ==========================================
+        function updateReducaoTab() {
+            let totalAtualAnual = 0;
+            let totalNovoAnual = 0;
+
+            const reducaoPorCD = {};
+            const reducaoPorConta = {};
+
+            let numMeses = state.filters.month === 'Todos' ? state.mesesAtivosArray.length : 1;
+            if(numMeses === 0) numMeses = 1;
+
+            // Agrupa primeiro para não multiplicar as projeções por mês!
+            const grouped = {};
+            state.filteredAggregated.forEach(d => {
+                const key = `${d.conta}|${d.filial}`;
+                if(!grouped[key]) grouped[key] = { conta: d.conta, descricao: d.descricao, cd: d.cd, filial: d.filial, realizado: 0 };
+                grouped[key].realizado += d.realizado;
+            });
+
+            // Analisa as contas já agrupadas
+            Object.values(grouped).forEach(d => {
+                const key = `${d.conta}|${d.filial}`;
+                let mediaMensal = d.realizado / numMeses; 
+                
+                let novoProjetadoMensal = state.projections[key] !== undefined ? state.projections[key] : mediaMensal;
+                
+                totalAtualAnual += (mediaMensal * 12);
+                totalNovoAnual += (novoProjetadoMensal * 12);
+
+                if(!reducaoPorCD[d.cd]) reducaoPorCD[d.cd] = { atual: 0, projetado: 0 };
+                reducaoPorCD[d.cd].atual += (mediaMensal * 12);
+                reducaoPorCD[d.cd].projetado += (novoProjetadoMensal * 12);
+
+                if(!reducaoPorConta[d.descricao]) reducaoPorConta[d.descricao] = { atual: 0, projetado: 0 };
+                reducaoPorConta[d.descricao].atual += (mediaMensal * 12);
+                reducaoPorConta[d.descricao].projetado += (novoProjetadoMensal * 12);
+            });
+
+            document.getElementById('reducao-kpi-atual').textContent = formatBR(totalAtualAnual);
+            document.getElementById('reducao-kpi-novo').textContent = formatBR(totalNovoAnual);
+            document.getElementById('reducao-kpi-economia').textContent = formatBR(totalAtualAnual - totalNovoAnual);
+
+            // Gráfico Redução por CD
+            const cdLabels = Object.keys(reducaoPorCD).sort((a,b) => reducaoPorCD[b].atual - reducaoPorCD[a].atual);
+            const cdAtualData = cdLabels.map(l => reducaoPorCD[l].atual);
+            const cdNovoData = cdLabels.map(l => reducaoPorCD[l].projetado);
+
+            if(state.charts.reducaoCD) state.charts.reducaoCD.destroy();
+            state.charts.reducaoCD = new Chart(document.getElementById('chartReducaoCD').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: cdLabels,
+                    datasets: [
+                        { label: 'Custo Anual (Pela Média Atual)', data: cdAtualData, backgroundColor: 'rgba(51, 65, 85, 0.6)', borderColor: '#64748b', borderWidth: 1, borderRadius: 2, datalabels: { color: '#94a3b8', align: 'end', anchor: 'end', formatter: formatKMBT, font: {size: 10} } },
+                        { label: 'Meta Reduzida', data: cdNovoData, backgroundColor: '#0ea5e9', borderRadius: 2, datalabels: { color: '#bae6fd', align: 'end', anchor: 'end', formatter: formatKMBT, font: {size: 10, weight: 'bold'} } }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } }, plugins: { legend: { labels: { color: '#cbd5e1' } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatBR(ctx.raw)}` } } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { callback: v => formatKMBT(v), color: '#64748b' } }, x: { grid: { display: false }, ticks: { color: '#64748b' } } }, animation: { duration: 600 } }
+            });
+
+            // Gráfico Redução por Conta
+            const contaLabels = Object.keys(reducaoPorConta).sort((a,b) => reducaoPorConta[b].atual - reducaoPorConta[a].atual);
+            const contaAtualData = contaLabels.map(l => reducaoPorConta[l].atual);
+            const contaNovoData = contaLabels.map(l => reducaoPorConta[l].projetado);
+
+            if(state.charts.reducaoConta) state.charts.reducaoConta.destroy();
+            state.charts.reducaoConta = new Chart(document.getElementById('chartReducaoConta').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: contaLabels,
+                    datasets: [
+                        { label: 'Custo Anual (Pela Média Atual)', data: contaAtualData, backgroundColor: 'rgba(51, 65, 85, 0.6)', borderColor: '#64748b', borderWidth: 1, borderRadius: 2, datalabels: { color: '#94a3b8', align: 'end', anchor: 'end', formatter: formatKMBT, font: {size: 9} } },
+                        { label: 'Meta Reduzida', data: contaNovoData, backgroundColor: '#10b981', borderRadius: 2, datalabels: { color: '#a7f3d0', align: 'end', anchor: 'end', formatter: formatKMBT, font: {size: 9, weight: 'bold'} } }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } }, plugins: { legend: { labels: { color: '#cbd5e1' } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatBR(ctx.raw)}` } } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { callback: v => formatKMBT(v), color: '#64748b' } }, x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45, color: '#64748b' } } }, animation: { duration: 600 } }
+            });
+        }
+
+        // ==========================================
+        // 7. GRÁFICOS DO DASH PRINCIPAL
+        // ==========================================
+        function updateCharts() {
+            // CDs
             const cdGroup = {};
-            state.filteredData.forEach(d => {
+            state.filteredAggregated.forEach(d => {
                 if(!cdGroup[d.cd]) cdGroup[d.cd] = { orcado: 0, realizado: 0 };
                 cdGroup[d.cd].orcado += d.orcamento; cdGroup[d.cd].realizado += d.realizado;
             });
-            // Ordena CDs do maior custo realizado para o menor
             const cdLabels = Object.keys(cdGroup).sort((a,b) => cdGroup[b].realizado - cdGroup[a].realizado);
             const cdOrcado = cdLabels.map(f => cdGroup[f].orcado);
             const cdRealizado = cdLabels.map(f => cdGroup[f].realizado);
@@ -1024,13 +1398,12 @@
                 options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } }, plugins: { legend: { labels: { color: '#cbd5e1' } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatBR(ctx.raw)}` } } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { callback: v => formatKMBT(v) } }, x: { grid: { display: false } } }, animation: { duration: 600 } }
             });
 
-            // === Gráfico Filiais (ORDENADO PELO MAIOR REALIZADO) ===
+            // Filiais
             const filialGroup = {};
-            state.filteredData.forEach(d => {
+            state.filteredAggregated.forEach(d => {
                 if(!filialGroup[d.filial]) filialGroup[d.filial] = { orcado: 0, realizado: 0 };
                 filialGroup[d.filial].orcado += d.orcamento; filialGroup[d.filial].realizado += d.realizado;
             });
-            // Ordena filiais do maior custo realizado para o menor
             const filiaisLabels = Object.keys(filialGroup).sort((a,b) => filialGroup[b].realizado - filialGroup[a].realizado);
             const dataOrcado = filiaisLabels.map(f => filialGroup[f].orcado);
             const dataRealizado = filiaisLabels.map(f => filialGroup[f].realizado);
@@ -1048,9 +1421,9 @@
                 options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } }, plugins: { legend: { labels: { color: '#cbd5e1' } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatBR(ctx.raw)}` } } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { callback: v => formatKMBT(v) } }, x: { grid: { display: false } } }, animation: { duration: 600 } }
             });
 
-            // === NOVO Gráfico Descrições (ORDENADO PELO MAIOR REALIZADO) ===
+            // Descrições
             const descGroup = {};
-            state.filteredData.forEach(d => {
+            state.filteredAggregated.forEach(d => {
                 if(!descGroup[d.descricao]) descGroup[d.descricao] = { orcado: 0, realizado: 0 };
                 descGroup[d.descricao].orcado += d.orcamento; descGroup[d.descricao].realizado += d.realizado;
             });
@@ -1071,11 +1444,11 @@
                 options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } }, plugins: { legend: { labels: { color: '#cbd5e1' } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatBR(ctx.raw)}` } } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { callback: v => formatKMBT(v) } }, x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45 } } }, animation: { duration: 600 } }
             });
 
-            // === Gráfico Pizza (LEGENDA CUSTOM HTML) ===
-            let pizzaData = state.data.filter(d => {
-                const mMatch = state.filters.month.length === 0 || state.filters.month.includes(d.mesStr);
-                const bMatch = state.filters.branch.length === 0 || state.filters.branch.includes(d.filial);
-                const cMatch = state.filters.cd.length === 0 || state.filters.cd.includes(d.cd);
+            // Pizza (Animada e HTML Custom)
+            let pizzaData = state.aggregatedData.filter(d => {
+                const mMatch = state.filters.month === 'Todos' || state.filters.month.includes(d.mesStr);
+                const bMatch = state.filters.branch === 'Todas' || state.filters.branch.includes(d.filial);
+                const cMatch = state.filters.cd === 'Todos' || state.filters.cd.includes(d.cd);
                 return mMatch && bMatch && cMatch;
             });
             const compGroup = {};
@@ -1111,7 +1484,6 @@
                 const label = item[0];
                 const color = bgColors[index];
                 const isSelected = state.filters.category.includes(label);
-                
                 const opacityClass = (state.filters.category.length > 0 && !isSelected) ? 'opacity-40' : 'opacity-100';
                 
                 const div = document.createElement('div');
@@ -1151,13 +1523,12 @@
                     state.charts.composicao.setActiveElements([]);
                     state.charts.composicao.update();
                 };
-
                 legendBox.appendChild(div);
             });
 
-            // === Gráfico Evolução ===
+            // Evolução
             const evolGroup = {};
-            state.filteredData.forEach(d => {
+            state.filteredAggregated.forEach(d => {
                 if(!evolGroup[d.mesNum]) evolGroup[d.mesNum] = { mes: d.mesStr, orcado: 0, realizado: 0 };
                 evolGroup[d.mesNum].orcado += d.orcamento; evolGroup[d.mesNum].realizado += d.realizado;
             });
@@ -1180,6 +1551,9 @@
             });
         }
         
+        // ==========================================
+        // 8. CONTROLE DE ABAS E TELAS
+        // ==========================================
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active', 'text-brand-cyan', 'bg-cyan-900/20'));
@@ -1187,6 +1561,30 @@
             const btn = document.getElementById(`btn-${tabId}`);
             btn.classList.add('active', 'text-brand-cyan');
             btn.classList.remove('text-gray-400');
+        }
+
+        window.switchDashboard = function(viewId) {
+            document.getElementById('view-custos').classList.add('hidden');
+            document.getElementById('view-reducao').classList.add('hidden');
+            
+            document.getElementById('btn-view-custos').classList.remove('border-brand-cyan', 'text-white');
+            document.getElementById('btn-view-custos').classList.add('border-transparent', 'text-gray-500');
+            
+            document.getElementById('btn-view-reducao').classList.remove('border-amber-500', 'text-white');
+            document.getElementById('btn-view-reducao').classList.add('border-transparent', 'text-gray-500');
+
+            if(viewId === 'view-custos') {
+                document.getElementById('view-custos').classList.remove('hidden');
+                document.getElementById('btn-view-custos').classList.add('border-brand-cyan', 'text-white');
+                document.getElementById('btn-view-custos').classList.remove('border-transparent', 'text-gray-500');
+            } else {
+                document.getElementById('view-reducao').classList.remove('hidden');
+                document.getElementById('btn-view-reducao').classList.add('border-amber-500', 'text-white');
+                document.getElementById('btn-view-reducao').classList.remove('border-transparent', 'text-gray-500');
+                
+                if(state.charts.reducaoCD) state.charts.reducaoCD.update();
+                if(state.charts.reducaoConta) state.charts.reducaoConta.update();
+            }
         }
     </script>
 </body>
