@@ -357,6 +357,15 @@
                 <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-brand-yellow"></i> Orçamento vs Realizado por Grupo
+                        </h3>
+                    </div>
+                    <div class="chart-container flex-grow" style="height: 260px;"><canvas id="chartGruposCustos"></canvas></div>
+                </section>
+
+                <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-white flex items-center gap-2">
                             <i class="fa-solid fa-list-check text-amber-500"></i> Orçamento vs Realizado por Descrição (Contas)
                         </h3>
                     </div>
@@ -450,22 +459,48 @@
                 </div>
 
                 <!-- KPIs de Projeção -->
-                <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card">
-                        <p class="text-sm font-medium text-gray-400 mb-1">Custo Anualizado (Ritmo Atual / Média)</p>
-                        <h2 class="text-3xl font-bold text-white" id="reducao-kpi-atual">R$ 0,00</h2>
+                <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+                    <!-- Coluna 1: Orçamento -->
+                    <div class="flex flex-col gap-3">
+                        <div class="bg-dark-card border border-dark-border p-4 rounded-xl glow-card">
+                            <p class="text-xs font-medium text-sky-400 mb-1 leading-tight">Orçado Jan-Abr</p>
+                            <h2 class="text-xl font-bold text-sky-300" id="reducao-kpi-orc-janabr">R$ 0,00</h2>
+                        </div>
+                        <div class="bg-dark-card border border-dark-border p-4 rounded-xl glow-card">
+                            <p class="text-xs font-medium text-sky-400/70 mb-1 leading-tight">Orçado Proj. Mai-Dez</p>
+                            <h2 class="text-xl font-bold text-sky-400/70" id="reducao-kpi-orc-proj">R$ 0,00</h2>
+                        </div>
                     </div>
-                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card">
-                        <p class="text-sm font-medium text-brand-cyan mb-1">Novo Custo Anual (Com Metas de Redução)</p>
-                        <h2 class="text-3xl font-bold text-brand-cyan" id="reducao-kpi-novo">R$ 0,00</h2>
+
+                    <!-- Coluna 2: Custo Realizado / Anualizado -->
+                    <div class="flex flex-col gap-3">
+                        <div class="bg-dark-card border border-dark-border p-4 rounded-xl glow-card">
+                            <p class="text-xs font-medium text-gray-300 mb-1 leading-tight">Realizado Jan-Abr</p>
+                            <h2 class="text-xl font-bold text-white" id="reducao-kpi-real-janabr">R$ 0,00</h2>
+                        </div>
+                        <div class="bg-dark-card border border-dark-border p-4 rounded-xl glow-card">
+                            <p class="text-xs font-medium text-gray-400 mb-1 leading-tight">Custo Anualizado (Ritmo Atual)</p>
+                            <h2 class="text-xl font-bold text-white" id="reducao-kpi-atual">R$ 0,00</h2>
+                        </div>
                     </div>
-                    <div class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card">
-                        <p class="text-sm font-medium text-emerald-400 mb-1">Redução Total Projetada no Ano</p>
-                        <h2 class="text-3xl font-bold text-emerald-400" id="reducao-kpi-economia">R$ 0,00</h2>
+
+                    <!-- Coluna 3: Novo Custo + Redução (com %) -->
+                    <div class="flex flex-col gap-3">
+                        <div class="bg-dark-card border border-brand-cyan/30 p-4 rounded-xl glow-card">
+                            <p class="text-xs font-medium text-brand-cyan mb-1 leading-tight">Novo Custo Anual (c/ Metas)</p>
+                            <h2 class="text-xl font-bold text-brand-cyan" id="reducao-kpi-novo">R$ 0,00</h2>
+                        </div>
+                        <div class="bg-dark-card border border-emerald-500/30 p-4 rounded-xl glow-card">
+                            <p class="text-xs font-medium text-emerald-400 mb-1 leading-tight">Redução Total Projetada</p>
+                            <h2 class="text-2xl font-bold text-emerald-400" id="reducao-kpi-economia">R$ 0,00</h2>
+                            <p class="text-sm font-semibold text-emerald-300 mt-1.5" id="reducao-kpi-pct">0,0 %</p>
+                        </div>
                     </div>
+
                 </section>
 
-                <!-- Evolução projetada Jan–Dez -->
+                <!<!-- Evolução projetada Jan–Dez -->
                 <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-white flex items-center gap-2">
@@ -474,6 +509,15 @@
                         <span class="text-xs text-gray-500 italic hidden sm:block">Jan–Abr = realizado · Mai–Dez = projetado (pontilhado)</span>
                     </div>
                     <div class="chart-container" style="height:260px;"><canvas id="chartEvolucaoReducao"></canvas></div>
+                </section>
+
+                <section class="bg-dark-card border border-dark-border p-5 rounded-xl glow-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-amber-500"></i> Projeção de Redução por Grupo (Ano)
+                        </h3>
+                    </div>
+                    <div class="chart-container" style="height:220px;"><canvas id="chartReducaoGrupo"></canvas></div>
                 </section>
 
                                 <section class="grid grid-cols-1 gap-6">
@@ -493,6 +537,25 @@
                         </div>
                         <div class="chart-container flex-grow" style="height: 350px;"><canvas id="chartReducaoConta"></canvas></div>
                     </div>
+
+                <!-- RESUMO DOS CUSTOS POR GRUPO -->
+                <section class="bg-dark-card border border-dark-border rounded-xl glow-card" style="overflow:visible;">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between px-5 py-4 border-b border-dark-border gap-3">
+                        <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-amber-500"></i> Resumo dos Custos por Grupo
+                        </h3>
+                        <span class="text-xs text-gray-500 italic"><i class="fa-solid fa-info-circle text-brand-cyan mr-1"></i> Clique no grupo para expandir as contas · Projeções consolidadas</span>
+                    </div>
+                    <div class="custom-scroll" style="max-height:460px;overflow-x:scroll;overflow-y:auto;width:100%;">
+                        <table class="text-left text-gray-300" style="min-width:2200px;width:max-content;">
+                            <thead id="thead-resumo-custos" class="text-xs uppercase bg-[#0B1120] text-gray-400 sticky top-0 z-10 shadow-md border-b border-dark-border"></thead>
+                            <tbody id="tbody-resumo-custos" class="divide-y divide-dark-border/40"></tbody>
+                        </table>
+                    </div>
+                    <div class="bg-[#0B1120] px-4 py-2 border-t border-dark-border text-[11px] text-gray-500 italic">
+                        * Consolidado por grupo — mês a mês e projeções derivadas dos valores inseridos na tabela detalhada abaixo
+                    </div>
+                </section>
 
                 <!-- Plano de Redução – Tabela Detalhada por Conta e Filial -->
                 <section class="bg-dark-card border border-dark-border rounded-xl glow-card" style="overflow:visible;">
@@ -560,11 +623,14 @@
         // 2. REGRAS DE NEGÓCIO E LÓGICA DE DADOS
         // ==========================================
         const mesesNomesGlobais = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+        // Grupos de custo para o RESUMO DOS CUSTOS
+        const COST_GROUPS = {
+            'CUSTOS INFRAESTRUTURA': ['ALUGUEL','ALUGUEL DE MAQ EQUIP - LOGISTI','BENS DE PEQUENO VALOR - LOGISTICA','CARGAS E DESCARGAS','COLETA DE IMPROPRIOS','COMBUSTIVEL-LOGISTICA','COMPRA DE EMBALAGENS','CONDOMINIO','CONFRATERNIZACOES - LOGISTICA','ESTACIONAMENTOS - LOGISTICA','INSTALACOES-DESPESAS','LOCACAO ARMAZEM','MANUTENCAO DE MAQUINAS-LOGISTI','MANUTENCAO DE VEICULOS - LOGIS','REFEICOES - LOGISTICA','VIAGENS E ESTADIAS - LOGISTICA'],
+            'CUSTOS FRETE + PEDÁGIO': ['FRETE SOBRE VENDA','PEDAGOGIOS BALSAS - LOGISTICA'],
+            'CUSTOS REDUÇÃO MÃO DE OBRA': ['LOCACAO DE MAO DE OBRA - LOGIS','HORAS EXTRAS - OPERAÇÃO','CUSTO DE MÃO DE OBRA']
+        };
         // Contas inseridas manualmente (sem base Excel)
-        const MANUAL_ACCOUNTS = [
-            { descricao: 'HORAS EXTRAS - OPERAÇÃO', conta: '99999001' },
-            { descricao: 'CUSTO DE MÃO DE OBRA',    conta: '99999002' }
-        ];
+        const MANUAL_ACCOUNTS = []; // Contas agora lidas do Excel como as demais
         const mesesNomesCompletos = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
         const extendedPalette = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#f43f5e', '#84cc16', '#14b8a6', '#6366f1', '#d946ef', '#f97316', '#eab308', '#22c55e', '#0ea5e9', '#a855f7', '#fb7185', '#bef264', '#2dd4bf', '#818cf8', '#e879f9', '#fb923c'];
 
@@ -604,7 +670,7 @@
             reducaoExpanded: {},
             manuaisData: {},
             
-            charts: { filial: null, cd: null, composicao: null, evolucao: null, descricoes: null, reducaoCD: null, reducaoConta: null, evolucaoReducao: null },
+            charts: { filial: null, cd: null, composicao: null, evolucao: null, descricoes: null, reducaoCD: null, reducaoConta: null, evolucaoReducao: null, reducaoGrupo: null, gruposCustos: null },
             expandedRows: {}
         };
 
@@ -927,6 +993,8 @@
             if (listDesc) {
                 listDesc.innerHTML = '';
                 const allDescs = [...new Set(state.aggregatedData.map(d => d.descricao))].sort();
+                MANUAL_ACCOUNTS.forEach(({descricao})=>{if(!allDescs.includes(descricao))allDescs.push(descricao);});
+                allDescs.sort();
                 allDescs.forEach(desc => {
                     const isChecked = state.filters.category === 'Todas' || (Array.isArray(state.filters.category) && state.filters.category.includes(desc));
                     listDesc.insertAdjacentHTML('beforeend', `<label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-white px-1 py-1 rounded hover:bg-dark-border/50"><input type="checkbox" class="cb-custom cb-desc" value="${desc}" ${isChecked?'checked':''} onchange="handleItemCheck('desc')"><span class="truncate text-xs">${desc}</span></label>`);
@@ -1324,242 +1392,189 @@
         // 6. DASHBOARD PREDITIVO + PLANO DE REDUÇÃO
         // ==========================================
         function updateReducaoTab() {
-            // ── Dynamic month ranges ─────────────────────────────────────
-            const nb = Math.max(1, state.mesesAtivosArray.length);
-            const MPV = Array.from({length:12-nb},(_,i)=>nb+1+i);  // projected month nums
-
-            // ── Group por descricao|filial ─────────────────────────────
-            const grouped = {};
+            const nb=Math.max(1,state.mesesAtivosArray.length);
+            const MPV=Array.from({length:12-nb},(_,i)=>nb+1+i);
+            const grouped={};
             state.filteredAggregated.forEach(d=>{
                 const k=`${d.descricao}|${d.filial}`;
-                if(!grouped[k]) grouped[k]={conta:d.conta,descricao:d.descricao,cd:d.cd,filial:d.filial,realizado:0};
-                grouped[k].realizado+=d.realizado;
+                if(!grouped[k]) grouped[k]={conta:d.conta,descricao:d.descricao,cd:d.cd,filial:d.filial,realizado:0,orcamento:0};
+                grouped[k].realizado+=d.realizado;grouped[k].orcamento+=d.orcamento;
             });
-            let tAtual=0,tNovo=0;
+            let tAtual=0,tNovo=0,tReal=0,tOrc=0;
             const rCD={},rConta={};
             Object.values(grouped).forEach(d=>{
-                const med=d.realizado/nb;
-                let proj=0;
+                const med=d.realizado/nb;let proj=0;
                 MPV.forEach(m=>{const k=`${d.descricao}|${d.filial}|${m}`;proj+=state.reducaoProjections[k]!==undefined?state.reducaoProjections[k]:med;});
                 const cAM=med*12,cAP=d.realizado+proj;
-                tAtual+=cAM;tNovo+=cAP;
-                if(!rCD[d.cd]) rCD[d.cd]={atual:0,proj:0};
-                rCD[d.cd].atual+=cAM;rCD[d.cd].proj+=cAP;
-                if(!rConta[d.descricao]) rConta[d.descricao]={atual:0,proj:0};
-                rConta[d.descricao].atual+=cAM;rConta[d.descricao].proj+=cAP;
+                tAtual+=cAM;tNovo+=cAP;tReal+=d.realizado;tOrc+=d.orcamento;
+                if(!rCD[d.cd]) rCD[d.cd]={atual:0,proj:0};rCD[d.cd].atual+=cAM;rCD[d.cd].proj+=cAP;
+                if(!rConta[d.descricao]) rConta[d.descricao]={atual:0,proj:0};rConta[d.descricao].atual+=cAM;rConta[d.descricao].proj+=cAP;
             });
-            document.getElementById('reducao-kpi-atual').textContent=formatBR(tAtual);
-            document.getElementById('reducao-kpi-novo').textContent=formatBR(tNovo);
-            document.getElementById('reducao-kpi-economia').textContent=formatBR(tAtual-tNovo);
+            const tOrcProj=(tOrc/nb)*(12-nb),tPct=tAtual>0?(tAtual-tNovo)/tAtual*100:0;
+            const kset=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+            kset('reducao-kpi-orc-janabr',formatBR(tOrc));kset('reducao-kpi-orc-proj',formatBR(tOrcProj));
+            kset('reducao-kpi-real-janabr',formatBR(tReal));kset('reducao-kpi-atual',formatBR(tAtual));
+            kset('reducao-kpi-novo',formatBR(tNovo));kset('reducao-kpi-economia',formatBR(tAtual-tNovo));
+            kset('reducao-kpi-pct',tPct.toFixed(1).replace('.',',')+' %');
 
-            // ── Evolução Mensal: 2 cores (realizado vs projetado) ────────
-            const mAct={};
-            state.filteredAggregated.forEach(d=>{mAct[d.mesNum]=(mAct[d.mesNum]||0)+d.realizado;});
-            const totReal=Object.values(mAct).reduce((s,v)=>s+v,0);
-            const medGeral=totReal/nb;
-            const lastMesNome=mesesNomesGlobais[nb-1]||'ABR';
-            const nextMesNome=mesesNomesGlobais[nb]||'MAI';
-
-            // Dataset 1: Realizado (Jan → last actual month) — cyan, sólido
+            // Evolução 2 cores
+            const mAct={};state.filteredAggregated.forEach(d=>{mAct[d.mesNum]=(mAct[d.mesNum]||0)+d.realizado;});
+            const totReal=Object.values(mAct).reduce((s,v)=>s+v,0),medGeral=totReal/nb;
+            const lastMesNome=mesesNomesGlobais[nb-1]||'ABR',nextMesNome=mesesNomesGlobais[nb]||'MAI';
             const realData=Array.from({length:12},(_,i)=>i<nb?(mAct[i+1]||0):null);
-            // Dataset 2: Projetado (last actual → Dez) — amber, pontilhado; começa no ponto de conexão
-            const projData=Array.from({length:12},(_,i)=>{
-                const m=i+1;
-                if(m<nb) return null;          // null antes da conexão
-                if(m===nb) return mAct[m]||0; // ponto de junção
-                let s=0;
-                Object.values(grouped).forEach(d=>{const gm=d.realizado/nb;const k=`${d.descricao}|${d.filial}|${m}`;s+=state.reducaoProjections[k]!==undefined?state.reducaoProjections[k]:gm;});
-                return s;
-            });
-
+            const projData=Array.from({length:12},(_,i)=>{const m=i+1;if(m<nb)return null;if(m===nb)return mAct[m]||0;let s=0;Object.values(grouped).forEach(d=>{const gm=d.realizado/nb;const k=`${d.descricao}|${d.filial}|${m}`;s+=state.reducaoProjections[k]!==undefined?state.reducaoProjections[k]:gm;});return s;});
             const evCanvas=document.getElementById('chartEvolucaoReducao');
-            if(evCanvas){
-                if(state.charts.evolucaoReducao) state.charts.evolucaoReducao.destroy();
-                state.charts.evolucaoReducao=new Chart(evCanvas.getContext('2d'),{
-                    type:'line',
-                    data:{labels:mesesNomesGlobais,datasets:[
-                        {label:'Ritmo Atual (Média)',data:Array(12).fill(medGeral),borderColor:'#475569',borderDash:[4,4],backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:0,datalabels:{display:false}},
-                        {label:`Realizado (Jan–${lastMesNome})`,data:realData,borderColor:'#22d3ee',backgroundColor:'rgba(34,211,238,0.07)',borderWidth:2.5,fill:true,
-                         pointBackgroundColor:'#0B1120',pointBorderColor:'#22d3ee',pointBorderWidth:2,pointRadius:3,tension:0.3,spanGaps:false,
-                         datalabels:{display:ctx=>ctx.dataIndex===nb-1,color:'#22d3ee',align:'top',anchor:'end',font:{size:10,weight:'bold'},formatter:v=>v?formatBR(v):''}},
-                        {label:`Projetado (${nextMesNome}–Dez)`,data:projData,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.04)',borderWidth:2,fill:false,
-                         borderDash:[5,4],pointBackgroundColor:'#0B1120',pointBorderColor:'#f59e0b',pointBorderWidth:2,pointRadius:2,tension:0.3,spanGaps:false,
-                         datalabels:{display:ctx=>ctx.dataIndex===11,color:'#f59e0b',align:'top',anchor:'end',font:{size:10,weight:'bold'},formatter:v=>v?formatBR(v):''}}
-                    ]},
-                    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:26}},interaction:{mode:'index',intersect:false},
-                        plugins:{legend:{labels:{color:'#cbd5e1',boxWidth:14}},
-                            tooltip:{backgroundColor:'rgba(15,23,42,.95)',titleColor:'#fff',bodyColor:'#cbd5e1',padding:12,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${formatBR(ctx.raw||0)}`}}},
-                        scales:{y:{grid:{color:'#1e293b'},ticks:{callback:v=>formatKMBT(v),color:'#64748b'}},x:{grid:{display:false},ticks:{color:'#64748b'}}}}
-                });
-            }
+            if(evCanvas){if(state.charts.evolucaoReducao)state.charts.evolucaoReducao.destroy();
+                state.charts.evolucaoReducao=new Chart(evCanvas.getContext('2d'),{type:'line',data:{labels:mesesNomesGlobais,datasets:[
+                    {label:'Ritmo Atual (Média)',data:Array(12).fill(medGeral),borderColor:'#475569',borderDash:[4,4],backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:0,datalabels:{display:false}},
+                    {label:`Realizado (Jan–${lastMesNome})`,data:realData,borderColor:'#22d3ee',backgroundColor:'rgba(34,211,238,0.07)',borderWidth:2.5,fill:true,pointBackgroundColor:'#0B1120',pointBorderColor:'#22d3ee',pointBorderWidth:2,pointRadius:3,tension:0.3,spanGaps:false,datalabels:{display:ctx=>ctx.dataIndex===nb-1,color:'#22d3ee',align:'top',anchor:'end',font:{size:10,weight:'bold'},formatter:v=>v?formatBR(v):''}},
+                    {label:`Projetado (${nextMesNome}–Dez)`,data:projData,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.04)',borderWidth:2,fill:false,borderDash:[5,4],pointBackgroundColor:'#0B1120',pointBorderColor:'#f59e0b',pointBorderWidth:2,pointRadius:2,tension:0.3,spanGaps:false,datalabels:{display:ctx=>ctx.dataIndex===11,color:'#f59e0b',align:'top',anchor:'end',font:{size:10,weight:'bold'},formatter:v=>v?formatBR(v):''}}]},
+                    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:26}},interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#cbd5e1',boxWidth:14}},tooltip:{backgroundColor:'rgba(15,23,42,.95)',titleColor:'#fff',bodyColor:'#cbd5e1',padding:12,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${formatBR(ctx.raw||0)}`}}},scales:{y:{grid:{color:'#1e293b'},ticks:{callback:v=>formatKMBT(v),color:'#64748b'}},x:{grid:{display:false},ticks:{color:'#64748b'}}}}});}
 
-            // ── Gráficos de barras ───────────────────────────────────────
+            // Grupo reduction chart
+            const rGrupo={};Object.entries(COST_GROUPS).forEach(([gn,accs])=>{rGrupo[gn]={atual:0,proj:0};accs.forEach(a=>{if(rConta[a]){rGrupo[gn].atual+=rConta[a].atual;rGrupo[gn].proj+=rConta[a].proj;}});});
+            const gL=Object.keys(rGrupo);
+            if(state.charts.reducaoGrupo)state.charts.reducaoGrupo.destroy();
+            const gCanvas=document.getElementById('chartReducaoGrupo');
+            if(gCanvas)state.charts.reducaoGrupo=new Chart(gCanvas.getContext('2d'),{type:'bar',data:{labels:gL,datasets:[
+                {label:'Custo Anual (Média)',data:gL.map(g=>rGrupo[g].atual),backgroundColor:'rgba(51,65,85,0.6)',borderColor:'#64748b',borderWidth:1,borderRadius:3,datalabels:{color:'#94a3b8',align:'end',anchor:'end',formatter:formatKMBT,font:{size:11}}},
+                {label:'Meta Projetada',data:gL.map(g=>rGrupo[g].proj),backgroundColor:'#10b981',borderRadius:3,datalabels:{color:'#a7f3d0',align:'end',anchor:'end',font:{size:11,weight:'bold'},formatter:(v,ctx)=>{const a=rGrupo[gL[ctx.dataIndex]]?.atual;if(!a||a===0||v>=a)return formatKMBT(v);return `${formatKMBT(v)}\n-${((a-v)/a*100).toFixed(1)}%`;}}}]},
+                options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:36}},plugins:{legend:{labels:{color:'#cbd5e1'}},tooltip:{backgroundColor:'rgba(15,23,42,.95)',titleColor:'#fff',bodyColor:'#cbd5e1',padding:12,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${formatBR(ctx.raw)}`}}},scales:{y:{grid:{color:'#1e293b'},ticks:{callback:v=>formatKMBT(v),color:'#64748b'}},x:{grid:{display:false},ticks:{color:'#64748b',font:{size:12}}}},animation:{duration:600}}});
+
+            // CD + Conta bar charts
             const cdL=Object.keys(rCD).sort((a,b)=>rCD[b].atual-rCD[a].atual);
-            if(state.charts.reducaoCD) state.charts.reducaoCD.destroy();
-            state.charts.reducaoCD=new Chart(document.getElementById('chartReducaoCD').getContext('2d'),{type:'bar',
-                data:{labels:cdL,datasets:[
-                    {label:'Custo Anual (Média)',data:cdL.map(l=>rCD[l].atual),backgroundColor:'rgba(51,65,85,0.6)',borderColor:'#64748b',borderWidth:1,borderRadius:2,datalabels:{color:'#94a3b8',align:'end',anchor:'end',formatter:formatKMBT,font:{size:10}}},
-                    {label:'Meta Projetada',data:cdL.map(l=>rCD[l].proj),backgroundColor:'#0ea5e9',borderRadius:2,
-                     datalabels:{color:'#bae6fd',align:'end',anchor:'end',font:{size:10,weight:'bold'},formatter:(v,ctx)=>{const a=rCD[cdL[ctx.dataIndex]]?.atual;if(!a||a===0||v>=a)return formatKMBT(v);return `${formatKMBT(v)}\n-${((a-v)/a*100).toFixed(1)}%`;}}}]},
-                options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:34}},plugins:{legend:{labels:{color:'#cbd5e1'}},tooltip:{backgroundColor:'rgba(15,23,42,.95)',titleColor:'#fff',bodyColor:'#cbd5e1',padding:12,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${formatBR(ctx.raw)}`}}},scales:{y:{grid:{color:'#1e293b'},ticks:{callback:v=>formatKMBT(v),color:'#64748b'}},x:{grid:{display:false},ticks:{color:'#64748b'}}},animation:{duration:600}}
-            });
-
+            if(state.charts.reducaoCD)state.charts.reducaoCD.destroy();
+            state.charts.reducaoCD=new Chart(document.getElementById('chartReducaoCD').getContext('2d'),{type:'bar',data:{labels:cdL,datasets:[{label:'Custo Anual (Média)',data:cdL.map(l=>rCD[l].atual),backgroundColor:'rgba(51,65,85,0.6)',borderColor:'#64748b',borderWidth:1,borderRadius:2,datalabels:{color:'#94a3b8',align:'end',anchor:'end',formatter:formatKMBT,font:{size:10}}},{label:'Meta Projetada',data:cdL.map(l=>rCD[l].proj),backgroundColor:'#0ea5e9',borderRadius:2,datalabels:{color:'#bae6fd',align:'end',anchor:'end',font:{size:10,weight:'bold'},formatter:(v,ctx)=>{const a=rCD[cdL[ctx.dataIndex]]?.atual;if(!a||a===0||v>=a)return formatKMBT(v);return `${formatKMBT(v)}\n-${((a-v)/a*100).toFixed(1)}%`;}}}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:34}},plugins:{legend:{labels:{color:'#cbd5e1'}},tooltip:{backgroundColor:'rgba(15,23,42,.95)',titleColor:'#fff',bodyColor:'#cbd5e1',padding:12,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${formatBR(ctx.raw)}`}}},scales:{y:{grid:{color:'#1e293b'},ticks:{callback:v=>formatKMBT(v),color:'#64748b'}},x:{grid:{display:false},ticks:{color:'#64748b'}}},animation:{duration:600}}});
             const cL=Object.keys(rConta).sort((a,b)=>rConta[b].atual-rConta[a].atual);
-            if(state.charts.reducaoConta) state.charts.reducaoConta.destroy();
-            state.charts.reducaoConta=new Chart(document.getElementById('chartReducaoConta').getContext('2d'),{type:'bar',
-                data:{labels:cL,datasets:[
-                    {label:'Custo Anual (Média)',data:cL.map(l=>rConta[l].atual),backgroundColor:'rgba(51,65,85,0.6)',borderColor:'#64748b',borderWidth:1,borderRadius:2,datalabels:{color:'#94a3b8',align:'end',anchor:'end',formatter:formatKMBT,font:{size:9}}},
-                    {label:'Meta Projetada',data:cL.map(l=>rConta[l].proj),backgroundColor:'#10b981',borderRadius:2,
-                     datalabels:{color:'#a7f3d0',align:'end',anchor:'end',font:{size:9,weight:'bold'},formatter:(v,ctx)=>{const a=rConta[cL[ctx.dataIndex]]?.atual;if(!a||a===0||v>=a)return formatKMBT(v);return `${formatKMBT(v)}\n-${((a-v)/a*100).toFixed(1)}%`;}}}]},
-                options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:34}},plugins:{legend:{labels:{color:'#cbd5e1'}},tooltip:{backgroundColor:'rgba(15,23,42,.95)',titleColor:'#fff',bodyColor:'#cbd5e1',padding:12,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${formatBR(ctx.raw)}`}}},scales:{y:{grid:{color:'#1e293b'},ticks:{callback:v=>formatKMBT(v),color:'#64748b'}},x:{grid:{display:false},ticks:{maxRotation:40,minRotation:40,color:'#64748b'}}},animation:{duration:600}}
-            });
+            if(state.charts.reducaoConta)state.charts.reducaoConta.destroy();
+            state.charts.reducaoConta=new Chart(document.getElementById('chartReducaoConta').getContext('2d'),{type:'bar',data:{labels:cL,datasets:[{label:'Custo Anual (Média)',data:cL.map(l=>rConta[l].atual),backgroundColor:'rgba(51,65,85,0.6)',borderColor:'#64748b',borderWidth:1,borderRadius:2,datalabels:{color:'#94a3b8',align:'end',anchor:'end',formatter:formatKMBT,font:{size:9}}},{label:'Meta Projetada',data:cL.map(l=>rConta[l].proj),backgroundColor:'#10b981',borderRadius:2,datalabels:{color:'#a7f3d0',align:'end',anchor:'end',font:{size:9,weight:'bold'},formatter:(v,ctx)=>{const a=rConta[cL[ctx.dataIndex]]?.atual;if(!a||a===0||v>=a)return formatKMBT(v);return `${formatKMBT(v)}\n-${((a-v)/a*100).toFixed(1)}%`;}}}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:34}},plugins:{legend:{labels:{color:'#cbd5e1'}},tooltip:{backgroundColor:'rgba(15,23,42,.95)',titleColor:'#fff',bodyColor:'#cbd5e1',padding:12,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${formatBR(ctx.raw)}`}}},scales:{y:{grid:{color:'#1e293b'},ticks:{callback:v=>formatKMBT(v),color:'#64748b'}},x:{grid:{display:false},ticks:{maxRotation:40,minRotation:40,color:'#64748b'}}},animation:{duration:600}}});
 
+            renderResumoCustos();
             renderReducaoDetalheTable();
         }
 
-        // ── TABELA DETALHE (totalmente dinâmica) ─────────────────────────
+        // ── RESUMO DOS CUSTOS POR GRUPO ──────────────────────────────────
+        function renderResumoCustos(){
+            const thead=document.getElementById('thead-resumo-custos'),tbody=document.getElementById('tbody-resumo-custos');
+            if(!thead||!tbody)return;
+            const nb=Math.max(1,state.mesesAtivosArray.length);
+            const MRN=mesesNomesGlobais.slice(0,nb),MPN=mesesNomesGlobais.slice(nb);
+            const MRV=Array.from({length:nb},(_,i)=>i+1),MPV=Array.from({length:12-nb},(_,i)=>nb+1+i);
+            const lastMes=MRN[MRN.length-1]||'ABR',nextMes=MPN[0]||'MAI';
+            const byDFM={};
+            state.filteredAggregated.forEach(d=>{
+                if(!byDFM[d.descricao])byDFM[d.descricao]={};if(!byDFM[d.descricao][d.filial])byDFM[d.descricao][d.filial]={};
+                if(!byDFM[d.descricao][d.filial][d.mesNum])byDFM[d.descricao][d.filial][d.mesNum]={real:0,orc:0};
+                byDFM[d.descricao][d.filial][d.mesNum].real+=d.realizado;byDFM[d.descricao][d.filial][d.mesNum].orc+=d.orcamento;
+            });
+            function getAccProj(acc){
+                const fils=Object.keys(byDFM[acc]||{});
+                const ps={};MPV.forEach(m=>ps[m]=0);let totP=0;const mR={},mO={};
+                fils.forEach(filial=>{const fm=byDFM[acc][filial];Object.keys(fm).forEach(m=>{const mi=parseInt(m);mR[mi]=(mR[mi]||0)+fm[m].real;mO[mi]=(mO[mi]||0)+fm[m].orc;});
+                    const fRJA=MRV.reduce((s,m)=>s+(fm[m]?.real||0),0),fMed=fRJA/nb;
+                    MPV.forEach(m=>{const k=`${acc}|${filial}|${m}`;const v=state.reducaoProjections[k]!==undefined?state.reducaoProjections[k]:fMed;ps[m]+=v;totP+=v;});});
+                const rJA=MRV.reduce((s,m)=>s+(mR[m]||0),0),orcJA=MRV.reduce((s,m)=>s+(mO[m]||0),0);
+                return{mR,mO,rJA,orcJA,ps,totP};
+            }
+            let th='<tr class="text-[10px] uppercase"><th class="px-3 py-2.5 text-left sticky left-0 bg-[#0B1120] z-20 min-w-[200px] whitespace-nowrap">Grupo / Conta</th><th class="px-2 py-2.5 text-right">Realiz.</th><th class="px-2 py-2.5 text-right text-brand-cyan">Média/Mês</th>';
+            MRN.forEach(m=>th+=`<th class="px-2 py-2.5 text-right text-gray-500">${m}</th>`);
+            MPN.forEach(m=>th+=`<th class="px-1.5 py-2.5 text-right text-emerald-500/90">${m}*</th>`);
+            th+=`<th class="px-2 py-2.5 text-right text-sky-400/80 bg-[#0a1826] whitespace-nowrap">Orç.Jan-${lastMes}</th><th class="px-2 py-2.5 text-right text-sky-500/60 bg-[#0a1826] whitespace-nowrap">Orç.Proj.${nextMes}-Dez</th><th class="px-2 py-2.5 text-right text-amber-400/90 bg-[#0d1326] whitespace-nowrap">Proj.${nextMes}-Dez</th><th class="px-2 py-2.5 text-right text-white bg-[#0d1326] whitespace-nowrap">Custo Anual<br><span class="text-[9px] text-gray-500 font-normal normal-case">(${nextMes}-Dez=Proj.)</span></th><th class="px-2 py-2.5 text-right text-gray-400 bg-[#0d1326] whitespace-nowrap">Custo Méd.×12</th><th class="px-2 py-2.5 text-right text-emerald-400/90 bg-[#0d1326] whitespace-nowrap">Redução R$</th><th class="px-2 py-2.5 text-right text-emerald-400/90 bg-[#0d1326] whitespace-nowrap">Red.%</th></tr>`;
+            thead.innerHTML=th;tbody.innerHTML='';let G={real:0,proj:0,orc:0,orcP:0,cA:0,cM:0};
+            Object.entries(COST_GROUPS).forEach(([groupName,accounts],gi)=>{
+                const sid=`rsg${gi}`,exp=state.reducaoExpanded[sid]||false;
+                let gReal=0,gProj=0,gOrc=0;const gMR={},gPS={};MPV.forEach(m=>gPS[m]=0);
+                accounts.forEach(acc=>{const {mR,orcJA,ps,totP,rJA}=getAccProj(acc);gReal+=rJA;gOrc+=orcJA;gProj+=totP;MRV.forEach(m=>gMR[m]=(gMR[m]||0)+(mR[m]||0));MPV.forEach(m=>gPS[m]=(gPS[m]||0)+(ps[m]||0));});
+                const gOrcP=(gOrc/nb)*(12-nb),cAP=gReal+gProj,cAM=(gReal/nb)*12,red=cAM-cAP,pct=cAM>0?red/cAM*100:0;
+                const rc=red>0?'text-emerald-400':red<0?'text-red-400':'text-gray-500';
+                G.real+=gReal;G.proj+=gProj;G.orc+=gOrc;G.orcP+=gOrcP;G.cA+=cAP;G.cM+=cAM;
+                let tr=`<tr class="hover:bg-dark-hover cursor-pointer border-b border-dark-border" onclick="toggleReducaoRow('${sid}')"><td class="px-3 py-3 sticky left-0 bg-[#0f1928] z-10 whitespace-nowrap"><i id="icon-${sid}" class="fa-solid fa-chevron-right text-amber-500 mr-2 text-[10px] expand-icon ${exp?'expanded':''}"></i><span class="text-amber-400 font-bold uppercase text-[11px]">${groupName}</span><span class="text-gray-500 text-[10px] ml-1">(${accounts.length})</span></td>`;
+                tr+=`<td class="px-2 py-3 text-right text-white font-semibold text-xs">${formatBR(gReal)}</td><td class="px-2 py-3 text-right text-brand-cyan text-xs">${formatBR(gReal/nb)}</td>`;
+                MRV.forEach(m=>{const v=gMR[m]||0;tr+=`<td class="px-2 py-3 text-right text-gray-300 text-xs">${v>0?formatBR(v):'<span class="text-gray-700">-</span>'}</td>`;});
+                MPV.forEach(m=>tr+=`<td class="px-2 py-3 text-right text-emerald-400/70 text-xs bg-emerald-900/5">${formatBR(gPS[m])}</td>`);
+                tr+=`<td class="px-2 py-3 text-right text-sky-400 text-xs bg-[#0a1826]">${formatBR(gOrc)}</td><td class="px-2 py-3 text-right text-sky-400/70 text-xs bg-[#0a1826]">${formatBR(gOrcP)}</td><td class="px-2 py-3 text-right text-amber-400 font-semibold text-xs bg-[#0d1326]">${formatBR(gProj)}</td><td class="px-2 py-3 text-right text-white text-xs bg-[#0d1326]">${formatBR(cAP)}</td><td class="px-2 py-3 text-right text-gray-400 text-xs bg-[#0d1326]">${formatBR(cAM)}</td><td class="px-2 py-3 text-right font-bold text-xs ${rc} bg-[#0d1326]">${formatBR(red)}</td><td class="px-2 py-3 text-right font-bold text-xs ${rc} bg-[#0d1326]">${pct.toFixed(1).replace('.',',')}%</td></tr>`;
+                tbody.insertAdjacentHTML('beforeend',tr);
+                accounts.forEach(acc=>{
+                    const {mR,orcJA,ps,totP,rJA}=getAccProj(acc);
+                    if(rJA===0&&totP===0)return;
+                    const aMed=rJA/nb,aOrcP=(orcJA/nb)*(12-nb),aCAP=rJA+totP,aCAM=aMed*12,aRed=aCAM-aCAP,aPct=aCAM>0?aRed/aCAM*100:0;
+                    const aC=aRed>0?'text-emerald-400/80':aRed<0?'text-red-400/80':'text-gray-600';
+                    let atr=`<tr class="${exp?'':'hidden'} child-of-${sid} bg-[#060a14] hover:bg-[#0a0f1a]"><td class="px-3 py-2 sticky left-0 bg-[#060a14] z-10 text-gray-400 text-xs whitespace-nowrap pl-8"><i class="fa-solid fa-turn-up fa-rotate-90 text-gray-600 mr-1 text-[10px]"></i>${acc}</td>`;
+                    atr+=`<td class="px-2 py-2 text-right text-gray-300 text-xs">${formatBR(rJA)}</td><td class="px-2 py-2 text-right text-brand-cyan/70 text-xs">${formatBR(aMed)}</td>`;
+                    MRV.forEach(m=>{const v=mR[m]||0;atr+=`<td class="px-2 py-2 text-right text-gray-500 text-xs">${v>0?formatBR(v):'<span class="text-gray-700">-</span>'}</td>`;});
+                    MPV.forEach(m=>atr+=`<td class="px-2 py-2 text-right text-emerald-400/60 text-xs bg-emerald-900/5">${formatBR(ps[m])}</td>`);
+                    atr+=`<td class="px-2 py-2 text-right text-sky-400/60 text-xs bg-[#0a1826]/50">${formatBR(orcJA)}</td><td class="px-2 py-2 text-right text-sky-400/40 text-xs bg-[#0a1826]/50">${formatBR(aOrcP)}</td><td class="px-2 py-2 text-right text-amber-400/70 font-semibold text-xs bg-[#0d1326]/50">${formatBR(totP)}</td><td class="px-2 py-2 text-right text-gray-300 text-xs bg-[#0d1326]/50">${formatBR(aCAP)}</td><td class="px-2 py-2 text-right text-gray-500 text-xs bg-[#0d1326]/50">${formatBR(aCAM)}</td><td class="px-2 py-2 text-right font-bold text-xs ${aC} bg-[#0d1326]/50">${formatBR(aRed)}</td><td class="px-2 py-2 text-right font-bold text-xs ${aC} bg-[#0d1326]/50">${aPct.toFixed(1).replace('.',',')}%</td></tr>`;
+                    tbody.insertAdjacentHTML('beforeend',atr);
+                });
+            });
+            const gR=G.cM-G.cA,gP=G.cM>0?gR/G.cM*100:0,gC=gR>0?'text-emerald-400':gR<0?'text-red-400':'text-gray-500';
+            let tot=`<tr class="border-t-2 border-brand-cyan/30 bg-[#0a1628]"><td class="px-3 py-3 sticky left-0 bg-[#0a1628] z-10 font-bold text-brand-cyan text-sm whitespace-nowrap">TOTAL CUSTOS LOGÍSTICOS</td><td class="px-2 py-3 text-right font-bold text-white text-xs">${formatBR(G.real)}</td><td class="px-2 py-3 text-center text-gray-600">—</td>`;
+            MRV.forEach(()=>tot+='<td></td>');MPV.forEach(()=>tot+='<td class="bg-emerald-900/5"></td>');
+            tot+=`<td class="px-2 py-3 text-right font-bold text-sky-400 text-xs bg-[#0a1826]">${formatBR(G.orc)}</td><td class="px-2 py-3 text-right font-bold text-sky-400/70 text-xs bg-[#0a1826]">${formatBR(G.orcP)}</td><td class="px-2 py-3 text-right font-bold text-amber-400 text-xs bg-[#0d1326]">${formatBR(G.proj)}</td><td class="px-2 py-3 text-right font-bold text-white text-sm bg-[#0d1326]">${formatBR(G.cA)}</td><td class="px-2 py-3 text-right font-bold text-gray-400 text-xs bg-[#0d1326]">${formatBR(G.cM)}</td><td class="px-2 py-3 text-right font-bold text-sm ${gC} bg-[#0d1326]">${formatBR(gR)}</td><td class="px-2 py-3 text-right font-bold text-sm ${gC} bg-[#0d1326]">${gP.toFixed(1).replace('.',',')}%</td></tr>`;
+            tbody.insertAdjacentHTML('beforeend',tot);
+        }
+
+                // ── TABELA DETALHADA (totalmente dinâmica) ──────────────────────
         function renderReducaoDetalheTable(){
             const thead=document.getElementById('thead-reducao-detalhe');
             const tbody=document.getElementById('tbody-reducao-detalhe');
             if(!thead||!tbody)return;
-
-            // DYNAMIC RANGES
             const nb=Math.max(1,state.mesesAtivosArray.length);
-            const MRN=mesesNomesGlobais.slice(0,nb);           // realized month names
-            const MPN=mesesNomesGlobais.slice(nb);             // projected month names
-            const MRV=Array.from({length:nb},(_,i)=>i+1);     // [1..nb]
-            const MPV=Array.from({length:12-nb},(_,i)=>nb+1+i); // [nb+1..12]
-            const lastMes=MRN[MRN.length-1]||'ABR';
-            const nextMes=MPN[0]||'MAI';
-
-            // Aggregate
+            const MRN=mesesNomesGlobais.slice(0,nb),MPN=mesesNomesGlobais.slice(nb);
+            const MRV=Array.from({length:nb},(_,i)=>i+1),MPV=Array.from({length:12-nb},(_,i)=>nb+1+i);
+            const lastMes=MRN[MRN.length-1]||'ABR',nextMes=MPN[0]||'MAI';
             const byD={};
             state.filteredAggregated.forEach(d=>{
                 if(!byD[d.descricao]) byD[d.descricao]={conta:d.conta,descricao:d.descricao,orcado:0,mR:{},mO:{},fils:{}};
-                byD[d.descricao].orcado+=d.orcamento;
-                byD[d.descricao].mR[d.mesNum]=(byD[d.descricao].mR[d.mesNum]||0)+d.realizado;
-                byD[d.descricao].mO[d.mesNum]=(byD[d.descricao].mO[d.mesNum]||0)+d.orcamento;
+                byD[d.descricao].orcado+=d.orcamento;byD[d.descricao].mR[d.mesNum]=(byD[d.descricao].mR[d.mesNum]||0)+d.realizado;byD[d.descricao].mO[d.mesNum]=(byD[d.descricao].mO[d.mesNum]||0)+d.orcamento;
                 if(!byD[d.descricao].fils[d.filial]) byD[d.descricao].fils[d.filial]={filial:d.filial,cd:d.cd,orcado:0,mR:{},mO:{}};
-                byD[d.descricao].fils[d.filial].orcado+=d.orcamento;
-                byD[d.descricao].fils[d.filial].mR[d.mesNum]=(byD[d.descricao].fils[d.filial].mR[d.mesNum]||0)+d.realizado;
-                byD[d.descricao].fils[d.filial].mO[d.mesNum]=(byD[d.descricao].fils[d.filial].mO[d.mesNum]||0)+d.orcamento;
+                byD[d.descricao].fils[d.filial].orcado+=d.orcamento;byD[d.descricao].fils[d.filial].mR[d.mesNum]=(byD[d.descricao].fils[d.filial].mR[d.mesNum]||0)+d.realizado;byD[d.descricao].fils[d.filial].mO[d.mesNum]=(byD[d.descricao].fils[d.filial].mO[d.mesNum]||0)+d.orcamento;
             });
-
-            // HEADER
-            let th='<tr class="text-[10px] uppercase">';
-            th+='<th class="px-3 py-2.5 text-left sticky left-0 bg-[#0B1120] z-20 min-w-[180px] whitespace-nowrap">Conta / Filial</th>';
-            th+='<th class="px-2 py-2.5 text-right whitespace-nowrap">Realiz.</th>';
-            th+=`<th class="px-2 py-2.5 text-right text-brand-cyan whitespace-nowrap">Média/Mês</th>`;
+            let th='<tr class="text-[10px] uppercase"><th class="px-3 py-2.5 text-left sticky left-0 bg-[#0B1120] z-20 min-w-[180px] whitespace-nowrap">Conta / Filial</th><th class="px-2 py-2.5 text-right whitespace-nowrap">Realiz.</th><th class="px-2 py-2.5 text-right text-brand-cyan whitespace-nowrap">Média/Mês</th>';
             MRN.forEach(m=>th+=`<th class="px-2 py-2.5 text-right text-gray-500 whitespace-nowrap">${m}</th>`);
             MPN.forEach(m=>th+=`<th class="px-1.5 py-2.5 text-right text-emerald-500/90 whitespace-nowrap">${m}*</th>`);
-            th+=`<th class="px-2 py-2.5 text-right text-sky-400/80 bg-[#0a1826] whitespace-nowrap">Orç. Jan-${lastMes}</th>`;
-            th+=`<th class="px-2 py-2.5 text-right text-sky-500/60 bg-[#0a1826] whitespace-nowrap">Orç. Proj.<br>${nextMes}-Dez</th>`;
-            th+=`<th class="px-2 py-2.5 text-right text-amber-400/90 bg-[#0d1326] whitespace-nowrap">Proj.<br>${nextMes}-Dez</th>`;
-            th+=`<th class="px-2 py-2.5 text-right text-white bg-[#0d1326] whitespace-nowrap">Custo Anual<br><span class="text-[9px] text-gray-500 font-normal normal-case">(${nextMes}-Dez=Proj.)</span></th>`;
-            th+='<th class="px-2 py-2.5 text-right text-gray-400 bg-[#0d1326] whitespace-nowrap">Custo Méd.×12</th>';
-            th+='<th class="px-2 py-2.5 text-right text-emerald-400/90 bg-[#0d1326] whitespace-nowrap">Redução R$</th>';
-            th+='<th class="px-2 py-2.5 text-right text-emerald-400/90 bg-[#0d1326] whitespace-nowrap">Red.%</th>';
-            th+='</tr>';
-            thead.innerHTML=th; tbody.innerHTML='';
-
-            let G={real:0,proj:0,orc:0,orcP:0,cA:0,cM:0};
-
+            th+=`<th class="px-2 py-2.5 text-right text-sky-400/80 bg-[#0a1826] whitespace-nowrap">Orç. Jan-${lastMes}</th><th class="px-2 py-2.5 text-right text-sky-500/60 bg-[#0a1826] whitespace-nowrap">Orç. Proj.<br>${nextMes}-Dez</th><th class="px-2 py-2.5 text-right text-amber-400/90 bg-[#0d1326] whitespace-nowrap">Proj.<br>${nextMes}-Dez</th><th class="px-2 py-2.5 text-right text-white bg-[#0d1326] whitespace-nowrap">Custo Anual<br><span class="text-[9px] text-gray-500 font-normal normal-case">(${nextMes}-Dez=Proj.)</span></th><th class="px-2 py-2.5 text-right text-gray-400 bg-[#0d1326] whitespace-nowrap">Custo Méd.×12</th><th class="px-2 py-2.5 text-right text-emerald-400/90 bg-[#0d1326] whitespace-nowrap">Redução R$</th><th class="px-2 py-2.5 text-right text-emerald-400/90 bg-[#0d1326] whitespace-nowrap">Red.%</th></tr>`;
+            thead.innerHTML=th;tbody.innerHTML='';let G={real:0,proj:0,orc:0,orcP:0,cA:0,cM:0};
             Object.values(byD).sort((a,b)=>a.descricao.localeCompare(b.descricao)).forEach((desc,di)=>{
                 const isManual=MANUAL_ACCOUNTS.some(ma=>ma.descricao===desc.descricao);
                 const sid=`rd${di}`,exp=state.reducaoExpanded[sid]||false;
-                const rJA=MRV.reduce((s,m)=>s+(desc.mR[m]||0),0);
-                const med=rJA/nb;
+                const rJA=MRV.reduce((s,m)=>s+(desc.mR[m]||0),0),med=rJA/nb;
                 let totP=0;const ps={};MPV.forEach(m=>ps[m]=0);
-                Object.values(desc.fils).forEach(fil=>{
-                    const fR=MRV.reduce((s,m)=>s+(fil.mR[m]||0),0),fM=fR/nb;
-                    MPV.forEach(m=>{const k=`${desc.descricao}|${fil.filial}|${m}`;const v=state.reducaoProjections[k]!==undefined?state.reducaoProjections[k]:fM;ps[m]+=v;totP+=v;});
-                });
-                const orcJA=MRV.reduce((s,m)=>s+(desc.mO[m]||0),0);
-                const orcProjMD=(orcJA/nb)*(12-nb);
+                Object.values(desc.fils).forEach(fil=>{const fR=MRV.reduce((s,m)=>s+(fil.mR[m]||0),0),fM=fR/nb;MPV.forEach(m=>{const k=`${desc.descricao}|${fil.filial}|${m}`;const v=state.reducaoProjections[k]!==undefined?state.reducaoProjections[k]:fM;ps[m]+=v;totP+=v;});});
+                const orcJA=MRV.reduce((s,m)=>s+(desc.mO[m]||0),0),orcProjMD=(orcJA/nb)*(12-nb);
                 const cAP=rJA+totP,cAM=med*12,red=cAM-cAP,pct=cAM>0?red/cAM*100:0;
                 const rc=red>0?'text-emerald-400':red<0?'text-red-400':'text-gray-500';
                 G.real+=rJA;G.proj+=totP;G.orc+=orcJA;G.orcP+=orcProjMD;G.cA+=cAP;G.cM+=cAM;
-
-                let tr=`<tr class="hover:bg-dark-hover cursor-pointer border-b border-dark-border/60" onclick="toggleReducaoRow('${sid}')">`;
-                tr+=`<td class="px-3 py-2.5 sticky left-0 bg-[#111827] z-10 font-bold text-white whitespace-nowrap text-xs"><i id="icon-${sid}" class="fa-solid fa-chevron-right text-brand-cyan mr-1.5 text-[10px] expand-icon ${exp?'expanded':''}"></i>${desc.descricao} <span class="text-gray-500 font-normal text-[10px]">(${desc.conta})</span>${isManual?'<span class="ml-1 text-[9px] bg-amber-900/40 text-amber-300 px-1 py-0.5 rounded">MANUAL</span>':''}</td>`;
-                tr+=`<td class="px-2 py-2.5 text-right text-white font-semibold text-xs">${formatBR(rJA)}</td>`;
-                tr+=`<td class="px-2 py-2.5 text-right text-brand-cyan text-xs">${formatBR(med)}</td>`;
-
+                let tr=`<tr class="hover:bg-dark-hover cursor-pointer border-b border-dark-border/60" onclick="toggleReducaoRow('${sid}')"><td class="px-3 py-2.5 sticky left-0 bg-[#111827] z-10 font-bold text-white whitespace-nowrap text-xs"><i id="icon-${sid}" class="fa-solid fa-chevron-right text-brand-cyan mr-1.5 text-[10px] expand-icon ${exp?'expanded':''}"></i>${desc.descricao} <span class="text-gray-500 font-normal text-[10px]">(${desc.conta})</span>${isManual?'<span class="ml-1 text-[9px] bg-amber-900/40 text-amber-300 px-1 py-0.5 rounded">MANUAL</span>':''}</td>`;
+                tr+=`<td class="px-2 py-2.5 text-right text-white font-semibold text-xs">${formatBR(rJA)}</td><td class="px-2 py-2.5 text-right text-brand-cyan text-xs">${formatBR(med)}</td>`;
                 if(isManual){
                     const dE=desc.descricao.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-                    MRV.forEach(m=>{
-                        const svR=state.manuaisData[desc.descricao]?.[m]?.real||'';
-                        const svO=state.manuaisData[desc.descricao]?.[m]?.orc||'';
-                        tr+=`<td class="px-1 py-1 bg-amber-900/5 min-w-[72px]"><div class="flex flex-col gap-0.5">
-                            <input type="number" step="0.01" title="Realizado ${mesesNomesGlobais[m-1]}" class="w-full bg-[#1a0800] border border-amber-800/50 text-amber-200 text-right px-1 py-0.5 rounded text-[10px] outline-none focus:ring-1 focus:ring-amber-500" placeholder="Real" value="${svR}" onchange="updateManualAccount('${dE}',${m},'real',this.value)">
-                            <input type="number" step="0.01" title="Orçado ${mesesNomesGlobais[m-1]}" class="w-full bg-[#000d18] border border-sky-800/50 text-sky-300 text-right px-1 py-0.5 rounded text-[10px] outline-none focus:ring-1 focus:ring-sky-500" placeholder="Orc" value="${svO}" onchange="updateManualAccount('${dE}',${m},'orc',this.value)">
-                        </div></td>`;
-                    });
-                    MPV.forEach(m=>{
-                        const k=`${desc.descricao}|GERAL|${m}`;const sv=state.reducaoProjections[k];
-                        tr+=`<td class="px-1 py-1 bg-emerald-900/5"><input type="number" step="0.01" class="w-[64px] bg-[#0a1628] border border-emerald-800/40 text-emerald-300 text-right px-1 py-1 rounded focus:ring-1 focus:ring-emerald-500 outline-none text-[11px] hover:border-emerald-500/60" placeholder="${med.toFixed(0)}" value="${sv!==undefined?sv:''}" onchange="updateReducaoProjection('${dE}','GERAL',${m},this.value)"></td>`;
-                    });
-                } else {
+                    MRV.forEach(m=>{const svR=state.manuaisData[desc.descricao]?.[m]?.real||'';const svO=state.manuaisData[desc.descricao]?.[m]?.orc||'';tr+=`<td class="px-1 py-1 bg-amber-900/5 min-w-[72px]"><div class="flex flex-col gap-0.5"><input type="number" step="0.01" title="Realizado ${mesesNomesGlobais[m-1]}" class="w-full bg-[#1a0800] border border-amber-800/50 text-amber-200 text-right px-1 py-0.5 rounded text-[10px] outline-none focus:ring-1 focus:ring-amber-500" placeholder="Real" value="${svR}" onchange="updateManualAccount('${dE}',${m},'real',this.value)"><input type="number" step="0.01" title="Orçado ${mesesNomesGlobais[m-1]}" class="w-full bg-[#000d18] border border-sky-800/50 text-sky-300 text-right px-1 py-0.5 rounded text-[10px] outline-none focus:ring-1 focus:ring-sky-500" placeholder="Orc" value="${svO}" onchange="updateManualAccount('${dE}',${m},'orc',this.value)"></div></td>`;});
+                    MPV.forEach(m=>{const k=`${desc.descricao}|GERAL|${m}`;const sv=state.reducaoProjections[k];tr+=`<td class="px-1 py-1 bg-emerald-900/5"><input type="number" step="0.01" class="w-[64px] bg-[#0a1628] border border-emerald-800/40 text-emerald-300 text-right px-1 py-1 rounded focus:ring-1 focus:ring-emerald-500 outline-none text-[11px] hover:border-emerald-500/60" placeholder="${med.toFixed(0)}" value="${sv!==undefined?sv:''}" onchange="updateReducaoProjection('${dE}','GERAL',${m},this.value)"></td>`;});
+                }else{
                     MRV.forEach(m=>{const v=desc.mR[m]||0;tr+=`<td class="px-2 py-2.5 text-right text-gray-400 text-xs">${v>0?formatBR(v):'<span class="text-gray-700">-</span>'}</td>`;});
                     MPV.forEach(m=>tr+=`<td class="px-2 py-2.5 text-right text-emerald-400/70 text-xs bg-emerald-900/5">${formatBR(ps[m])}</td>`);
                 }
-
-                tr+=`<td class="px-2 py-2.5 text-right text-sky-400 text-xs bg-[#0a1826]">${formatBR(orcJA)}</td>`;
-                tr+=`<td class="px-2 py-2.5 text-right text-sky-400/70 text-xs bg-[#0a1826]">${formatBR(orcProjMD)}</td>`;
-                tr+=`<td class="px-2 py-2.5 text-right text-amber-400 font-semibold text-xs bg-[#0d1326]">${formatBR(totP)}</td>`;
-                tr+=`<td class="px-2 py-2.5 text-right text-white text-xs bg-[#0d1326]">${formatBR(cAP)}</td>`;
-                tr+=`<td class="px-2 py-2.5 text-right text-gray-400 text-xs bg-[#0d1326]">${formatBR(cAM)}</td>`;
-                tr+=`<td class="px-2 py-2.5 text-right font-bold text-xs ${rc} bg-[#0d1326]">${formatBR(red)}</td>`;
-                tr+=`<td class="px-2 py-2.5 text-right font-bold text-xs ${rc} bg-[#0d1326]">${pct.toFixed(1).replace('.',',')}%</td>`;
-                tr+='</tr>';
+                tr+=`<td class="px-2 py-2.5 text-right text-sky-400 text-xs bg-[#0a1826]">${formatBR(orcJA)}</td><td class="px-2 py-2.5 text-right text-sky-400/70 text-xs bg-[#0a1826]">${formatBR(orcProjMD)}</td><td class="px-2 py-2.5 text-right text-amber-400 font-semibold text-xs bg-[#0d1326]">${formatBR(totP)}</td><td class="px-2 py-2.5 text-right text-white text-xs bg-[#0d1326]">${formatBR(cAP)}</td><td class="px-2 py-2.5 text-right text-gray-400 text-xs bg-[#0d1326]">${formatBR(cAM)}</td><td class="px-2 py-2.5 text-right font-bold text-xs ${rc} bg-[#0d1326]">${formatBR(red)}</td><td class="px-2 py-2.5 text-right font-bold text-xs ${rc} bg-[#0d1326]">${pct.toFixed(1).replace('.',',')}%</td></tr>`;
                 tbody.insertAdjacentHTML('beforeend',tr);
-
-                // Filial rows (non-manual only)
-                if(!isManual){
-                    Object.values(desc.fils).sort((a,b)=>a.filial.localeCompare(b.filial)).forEach(fil=>{
-                        const fR=MRV.reduce((s,m)=>s+(fil.mR[m]||0),0),fM=fR/nb;
-                        let fTP=0;const fPV={};
-                        MPV.forEach(m=>{const k=`${desc.descricao}|${fil.filial}|${m}`;const v=state.reducaoProjections[k]!==undefined?state.reducaoProjections[k]:fM;fPV[m]=v;fTP+=v;});
-                        const fOrcJA=MRV.reduce((s,m)=>s+(fil.mO[m]||0),0);
-                        const fOrcProjMD=(fOrcJA/nb)*(12-nb);
-                        const fCA=fR+fTP,fCM=fM*12,fR2=fCM-fCA,fP=fCM>0?fR2/fCM*100:0;
-                        const fc=fR2>0?'text-emerald-400/80':fR2<0?'text-red-400/80':'text-gray-600';
-                        const dE=desc.descricao.replace(/\\/g,'\\\\').replace(/'/g,"\\'"),fE=fil.filial.replace(/'/g,"\\'");
-                        let ftr=`<tr class="${exp?'':'hidden'} child-of-${sid} bg-[#060a14] hover:bg-[#0a0f1a]">`;
-                        ftr+=`<td class="px-3 py-2 sticky left-0 bg-[#060a14] z-10 text-gray-400 text-xs whitespace-nowrap pl-8"><i class="fa-solid fa-turn-up fa-rotate-90 text-gray-600 mr-1 text-[10px]"></i>${fil.filial} <span class="text-gray-600 text-[10px]">(${fil.cd})</span></td>`;
-                        ftr+=`<td class="px-2 py-2 text-right text-gray-300 text-xs">${formatBR(fR)}</td>`;
-                        ftr+=`<td class="px-2 py-2 text-right text-brand-cyan/70 text-xs">${formatBR(fM)}</td>`;
-                        MRV.forEach(m=>{const v=fil.mR[m]||0;ftr+=`<td class="px-2 py-2 text-right text-gray-500 text-xs">${v>0?formatBR(v):'<span class="text-gray-700">-</span>'}</td>`;});
-                        MPV.forEach(m=>{const k=`${desc.descricao}|${fil.filial}|${m}`;const sv=state.reducaoProjections[k];ftr+=`<td class="px-1 py-1 bg-emerald-900/5"><input type="number" step="0.01" class="w-[64px] bg-[#0a1628] border border-emerald-800/40 text-emerald-300 text-right px-1 py-1 rounded focus:ring-1 focus:ring-emerald-500 outline-none text-[11px] hover:border-emerald-500/60" placeholder="${fM.toFixed(0)}" value="${sv!==undefined?sv:''}" onchange="updateReducaoProjection('${dE}','${fE}',${m},this.value)"></td>`;});
-                        ftr+=`<td class="px-2 py-2 text-right text-sky-400/60 text-xs bg-[#0a1826]/50">${formatBR(fOrcJA)}</td>`;
-                        ftr+=`<td class="px-2 py-2 text-right text-sky-400/40 text-xs bg-[#0a1826]/50">${formatBR(fOrcProjMD)}</td>`;
-                        ftr+=`<td class="px-2 py-2 text-right text-amber-400/70 font-semibold text-xs bg-[#0d1326]/50">${formatBR(fTP)}</td>`;
-                        ftr+=`<td class="px-2 py-2 text-right text-gray-300 text-xs bg-[#0d1326]/50">${formatBR(fCA)}</td>`;
-                        ftr+=`<td class="px-2 py-2 text-right text-gray-500 text-xs bg-[#0d1326]/50">${formatBR(fCM)}</td>`;
-                        ftr+=`<td class="px-2 py-2 text-right font-bold text-xs ${fc} bg-[#0d1326]/50">${formatBR(fR2)}</td>`;
-                        ftr+=`<td class="px-2 py-2 text-right font-bold text-xs ${fc} bg-[#0d1326]/50">${fP.toFixed(1).replace('.',',')}%</td>`;
-                        ftr+='</tr>';
-                        tbody.insertAdjacentHTML('beforeend',ftr);
-                    });
-                }
+                if(!isManual){Object.values(desc.fils).sort((a,b)=>a.filial.localeCompare(b.filial)).forEach(fil=>{
+                    const fR=MRV.reduce((s,m)=>s+(fil.mR[m]||0),0),fM=fR/nb;let fTP=0;const fPV={};
+                    MPV.forEach(m=>{const k=`${desc.descricao}|${fil.filial}|${m}`;const v=state.reducaoProjections[k]!==undefined?state.reducaoProjections[k]:fM;fPV[m]=v;fTP+=v;});
+                    const fOrcJA=MRV.reduce((s,m)=>s+(fil.mO[m]||0),0),fOrcP=(fOrcJA/nb)*(12-nb),fCA=fR+fTP,fCM=fM*12,fR2=fCM-fCA,fP=fCM>0?fR2/fCM*100:0;
+                    const fc=fR2>0?'text-emerald-400/80':fR2<0?'text-red-400/80':'text-gray-600';
+                    const dE=desc.descricao.replace(/\\/g,'\\\\').replace(/'/g,"\\'"),fE=fil.filial.replace(/'/g,"\\'");
+                    let ftr=`<tr class="${exp?'':'hidden'} child-of-${sid} bg-[#060a14] hover:bg-[#0a0f1a]"><td class="px-3 py-2 sticky left-0 bg-[#060a14] z-10 text-gray-400 text-xs whitespace-nowrap pl-8"><i class="fa-solid fa-turn-up fa-rotate-90 text-gray-600 mr-1 text-[10px]"></i>${fil.filial} <span class="text-gray-600 text-[10px]">(${fil.cd})</span></td>`;
+                    ftr+=`<td class="px-2 py-2 text-right text-gray-300 text-xs">${formatBR(fR)}</td><td class="px-2 py-2 text-right text-brand-cyan/70 text-xs">${formatBR(fM)}</td>`;
+                    MRV.forEach(m=>{const v=fil.mR[m]||0;ftr+=`<td class="px-2 py-2 text-right text-gray-500 text-xs">${v>0?formatBR(v):'<span class="text-gray-700">-</span>'}</td>`;});
+                    MPV.forEach(m=>{const k=`${desc.descricao}|${fil.filial}|${m}`;const sv=state.reducaoProjections[k];ftr+=`<td class="px-1 py-1 bg-emerald-900/5"><input type="number" step="0.01" class="w-[64px] bg-[#0a1628] border border-emerald-800/40 text-emerald-300 text-right px-1 py-1 rounded focus:ring-1 focus:ring-emerald-500 outline-none text-[11px] hover:border-emerald-500/60" placeholder="${fM.toFixed(0)}" value="${sv!==undefined?sv:''}" onchange="updateReducaoProjection('${dE}','${fE}',${m},this.value)"></td>`;});
+                    ftr+=`<td class="px-2 py-2 text-right text-sky-400/60 text-xs bg-[#0a1826]/50">${formatBR(fOrcJA)}</td><td class="px-2 py-2 text-right text-sky-400/40 text-xs bg-[#0a1826]/50">${formatBR(fOrcP)}</td><td class="px-2 py-2 text-right text-amber-400/70 font-semibold text-xs bg-[#0d1326]/50">${formatBR(fTP)}</td><td class="px-2 py-2 text-right text-gray-300 text-xs bg-[#0d1326]/50">${formatBR(fCA)}</td><td class="px-2 py-2 text-right text-gray-500 text-xs bg-[#0d1326]/50">${formatBR(fCM)}</td><td class="px-2 py-2 text-right font-bold text-xs ${fc} bg-[#0d1326]/50">${formatBR(fR2)}</td><td class="px-2 py-2 text-right font-bold text-xs ${fc} bg-[#0d1326]/50">${fP.toFixed(1).replace('.',',')}%</td></tr>`;
+                    tbody.insertAdjacentHTML('beforeend',ftr);
+                });}
             });
-
-            // TOTAL ROW
             const gR=G.cM-G.cA,gP=G.cM>0?gR/G.cM*100:0,gC=gR>0?'text-emerald-400':gR<0?'text-red-400':'text-gray-500';
-            let tot='<tr class="border-t-2 border-brand-cyan/30 bg-[#0a1628]">';
-            tot+='<td class="px-3 py-3 sticky left-0 bg-[#0a1628] z-10 font-bold text-brand-cyan text-sm whitespace-nowrap">TOTAL GERAL</td>';
-            tot+=`<td class="px-2 py-3 text-right font-bold text-white text-xs">${formatBR(G.real)}</td>`;
-            tot+='<td class="px-2 py-3 text-center text-gray-600">—</td>';
-            MRV.forEach(()=>tot+='<td></td>');
-            MPV.forEach(()=>tot+='<td class="bg-emerald-900/5"></td>');
-            tot+=`<td class="px-2 py-3 text-right font-bold text-sky-400 text-xs bg-[#0a1826]">${formatBR(G.orc)}</td>`;
-            tot+=`<td class="px-2 py-3 text-right font-bold text-sky-400/70 text-xs bg-[#0a1826]">${formatBR(G.orcP)}</td>`;
-            tot+=`<td class="px-2 py-3 text-right font-bold text-amber-400 text-xs bg-[#0d1326]">${formatBR(G.proj)}</td>`;
-            tot+=`<td class="px-2 py-3 text-right font-bold text-white text-sm bg-[#0d1326]">${formatBR(G.cA)}</td>`;
-            tot+=`<td class="px-2 py-3 text-right font-bold text-gray-400 text-xs bg-[#0d1326]">${formatBR(G.cM)}</td>`;
-            tot+=`<td class="px-2 py-3 text-right font-bold text-sm ${gC} bg-[#0d1326]">${formatBR(gR)}</td>`;
-            tot+=`<td class="px-2 py-3 text-right font-bold text-sm ${gC} bg-[#0d1326]">${gP.toFixed(1).replace('.',',')}%</td>`;
-            tot+='</tr>';
+            let tot=`<tr class="border-t-2 border-brand-cyan/30 bg-[#0a1628]"><td class="px-3 py-3 sticky left-0 bg-[#0a1628] z-10 font-bold text-brand-cyan text-sm whitespace-nowrap">TOTAL GERAL</td><td class="px-2 py-3 text-right font-bold text-white text-xs">${formatBR(G.real)}</td><td class="px-2 py-3 text-center text-gray-600">—</td>`;
+            MRV.forEach(()=>tot+='<td></td>');MPV.forEach(()=>tot+='<td class="bg-emerald-900/5"></td>');
+            tot+=`<td class="px-2 py-3 text-right font-bold text-sky-400 text-xs bg-[#0a1826]">${formatBR(G.orc)}</td><td class="px-2 py-3 text-right font-bold text-sky-400/70 text-xs bg-[#0a1826]">${formatBR(G.orcP)}</td><td class="px-2 py-3 text-right font-bold text-amber-400 text-xs bg-[#0d1326]">${formatBR(G.proj)}</td><td class="px-2 py-3 text-right font-bold text-white text-sm bg-[#0d1326]">${formatBR(G.cA)}</td><td class="px-2 py-3 text-right font-bold text-gray-400 text-xs bg-[#0d1326]">${formatBR(G.cM)}</td><td class="px-2 py-3 text-right font-bold text-sm ${gC} bg-[#0d1326]">${formatBR(gR)}</td><td class="px-2 py-3 text-right font-bold text-sm ${gC} bg-[#0d1326]">${gP.toFixed(1).replace('.',',')}%</td></tr>`;
             tbody.insertAdjacentHTML('beforeend',tot);
         }
 
@@ -1588,6 +1603,16 @@
         // 7. GRÁFICOS DO DASH PRINCIPAL
         // ==========================================
         function updateCharts() {
+            // ── Grupos Chart (Orçamento vs Realizado por Grupo) ──────────
+            const grupoOR={};Object.entries(COST_GROUPS).forEach(([gn,])=>{grupoOR[gn]={orc:0,real:0};});
+            state.filteredAggregated.forEach(d=>{Object.entries(COST_GROUPS).forEach(([gn,accs])=>{if(accs.includes(d.descricao)){grupoOR[gn].orc+=d.orcamento;grupoOR[gn].real+=d.realizado;}});});
+            const guL=Object.keys(grupoOR);
+            if(state.charts.gruposCustos)state.charts.gruposCustos.destroy();
+            const guCanvas=document.getElementById('chartGruposCustos');
+            if(guCanvas)state.charts.gruposCustos=new Chart(guCanvas.getContext('2d'),{type:'bar',data:{labels:guL,datasets:[
+                {label:'Orçamento Previsto',data:guL.map(g=>grupoOR[g].orc),backgroundColor:'rgba(101,80,50,0.7)',borderColor:'#b45309',borderWidth:1,borderRadius:3,datalabels:{color:'#fbbf24',align:'end',anchor:'end',formatter:formatKMBT,font:{size:11}}},
+                {label:'Realizado',data:guL.map(g=>grupoOR[g].real),backgroundColor:'#f59e0b',borderRadius:3,datalabels:{color:'#fef3c7',align:'end',anchor:'end',font:{size:11,weight:'bold'},formatter:(v,ctx)=>{const o=grupoOR[guL[ctx.dataIndex]]?.orc;if(!o||o===0)return formatKMBT(v);const p=((v-o)/o*100).toFixed(1);return `${formatKMBT(v)}\n${v>o?'+':''}${p}%`;}}}]},
+                options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:36}},plugins:{legend:{labels:{color:'#cbd5e1'}},tooltip:{backgroundColor:'rgba(15,23,42,.95)',titleColor:'#fff',bodyColor:'#cbd5e1',padding:12,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${formatBR(ctx.raw)}`}}},scales:{y:{grid:{color:'#1e293b'},ticks:{callback:v=>formatKMBT(v),color:'#64748b'}},x:{grid:{display:false},ticks:{color:'#64748b',font:{size:12}}}},animation:{duration:600}}});
             // CDs
             const cdGroup = {};
             state.filteredAggregated.forEach(d => {
